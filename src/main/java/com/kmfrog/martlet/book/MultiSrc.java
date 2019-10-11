@@ -1,0 +1,78 @@
+package com.kmfrog.martlet.book;
+
+import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
+
+/**
+ * an item in multi-source order book. 多源订单项。
+ * 
+ * @author dust Sep 30, 2019
+ *
+ */
+public class MultiSrc {
+
+    /**
+     * 当前订单的价格。（冗余)
+     */
+    private final long price;
+    /**
+     * 多路来源及其size的集合。
+     */
+    private final Int2LongOpenHashMap srcSizeMap;
+
+    /**
+     * 某价位下，所有来源的数量集合。
+     * @param price
+     */
+    MultiSrc(long price) {
+        this.price = price;
+        this.srcSizeMap = new Int2LongOpenHashMap();
+    }
+
+    long size() {
+        return srcSizeMap.values().stream().mapToLong(v -> v.longValue()).sum();
+    }
+
+    /**
+     * 增加一个增量到指定的来源。Adds an increment to value currently associated with a key.
+     * 
+     * @param quantity increment quantity.
+     * @param source
+     * @return the new value
+     */
+    long addTo(long quantity, int source) {
+        return srcSizeMap.addTo(source, quantity);
+    }
+
+    /**
+     * 直接更新指定来源到指定的数量。
+     * 
+     * @param quantity
+     * @param source
+     * @return 更新后，全部来源的数量累计和。
+     */
+    long updateTo(long quantity, int source) {
+        if (quantity == 0) {
+            srcSizeMap.remove(source);
+        }
+        else{
+            srcSizeMap.put(source, quantity);
+        }
+        return size();
+    }
+
+    /**
+     * 清理某个来源的数量。
+     * @param source
+     */
+    boolean clearSource(int source) {
+        if(srcSizeMap.containsKey(source)) {
+            srcSizeMap.remove(source);
+        }
+        return size() == 0;
+    }
+    
+    String dumpString() {
+        return srcSizeMap.toString();
+    }
+
+}
