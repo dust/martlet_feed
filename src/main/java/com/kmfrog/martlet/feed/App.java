@@ -87,7 +87,9 @@ public class App implements ResetController {
         while (true) {
             Thread.sleep(10000L);
             bnbbtcBook.dump(Side.BUY, System.out);
-            System.out.println("#####\n");
+            System.out.println("\n#####\n");
+            bnbethBook.dump(Side.BUY, System.out);
+            System.out.println("\n=====\n");
         }
     }
 
