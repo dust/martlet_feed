@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.kmfrog.martlet.feed;
+package com.kmfrog.martlet.util;
 
 import static com.kmfrog.martlet.util.Strings.repeat;
 import static java.util.Arrays.asList;

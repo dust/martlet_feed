@@ -16,6 +16,7 @@ import com.kmfrog.martlet.book.AggregateOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.feed.impl.BinanceInstrumentDepth;
+import com.kmfrog.martlet.feed.impl.BinanceWebSocketHandler;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
 
@@ -42,19 +43,17 @@ public class App implements ResetController {
         return books.computeIfAbsent(instrument, (key) -> new AggregateOrderBook(key));
     }
 
-    void startOrderBook(final Source mkt, Set<String> symbols, BinanceInstrumentDepth depth, boolean isRest, boolean isWs) {
-        if (isRest) {
-            executor.submit(new RestSnapshotRunnable("https://www.binance.com/api/v1/depth?symbol=BNBBTC&limit=10", "GET",
-                    null, null, depth));
-        }
-        if (isWs) {
-            
-            
-                WebSocketDaemon websocket = new WebSocketDaemon("wss://stream.binance.com:9443/stream?streams=%s@depth", symbols, depth);
-                
-//            executor.submit(websocket);
-                websocket.run();
-        }
+    void startSnapshotTask(String symbol, SnapshotDataListener listener) {
+        Runnable r = new RestSnapshotRunnable(
+                String.format("https://www.binance.com/api/v1/depth?symbol=%s&limit=10", symbol), "GET", null, null,
+                listener);
+        executor.submit(r);
+    }
+
+    void startWebSocket(Source source, BaseWebSocketHandler handler) {
+        WebSocketDaemon wsDaemon = new WebSocketDaemon(handler);
+        websocketDaemons.put(source, wsDaemon);
+        wsDaemon.keepAlive();
     }
 
     public static void main(String[] args) throws InterruptedException, ExecutionException {
@@ -74,13 +73,17 @@ public class App implements ResetController {
         Instrument bnbbtc = new Instrument("BNBBTC", 8, 8);
         Instrument bnbeth = new Instrument("BNBETH", 8, 8);
         AggregateOrderBook bnbbtcBook = app.makesureOrderBook(bnbbtc.asLong());
-//        AggregateOrderBook bnbethBook = app.makesureOrderBook(bnbeth.asLong());
-        Set<String> symbols = new HashSet<>();
-        symbols.add("bnbbtc");
-        symbols.add("bnbeth");
+        AggregateOrderBook bnbethBook = app.makesureOrderBook(bnbeth.asLong());
+
         BinanceInstrumentDepth btc = new BinanceInstrumentDepth(bnbbtc, bnbbtcBook, app);
-//        BinanceInst
-        app.startOrderBook(Source.Binance, symbols, btc, true, true);
+        BinanceInstrumentDepth eth = new BinanceInstrumentDepth(bnbeth, bnbethBook, app);
+        app.startSnapshotTask("BNBBTC", btc);
+        app.startSnapshotTask("BNBETH", eth);
+        BaseWebSocketHandler handler = new BinanceWebSocketHandler(
+                "wss://stream.binance.com:9443/stream?streams=%s@depth", new String[] { "bnbbtc", "bnbeth" },
+                new BinanceInstrumentDepth[] { btc, eth });
+        app.startWebSocket(Source.Binance, handler);
+
         while (true) {
             Thread.sleep(10000L);
             bnbbtcBook.dump(Side.BUY, System.out);
@@ -89,19 +92,7 @@ public class App implements ResetController {
     }
 
     public void reset(Source mkt, Instrument instrument, BinanceInstrumentDepth depth, boolean isRest, boolean isWs) {
-        // Instrument instrument = new Instrument("BNBBTC", 8, 8);
-        // BinanceInstrumentDepth btc = new BinanceInstrumentDepth(instrument, this);
-        //// new DepthFeedRunnable("wss://stream.binance.com:9443/ws/bnbbtc@depth", listener);
-        // Future f=executor.submit(new RestRunnable("https://www.binance.com/api/v1/depth?symbol=BNBBTC&limit=1000",
-        // "GET", null, null, btc));
-        // System.out.println(f.get());
-        // f.cancel(true);
-        // Thread.sleep(2000);
-        // System.out.println("Done");
-        Set<String> symbols = new HashSet<>();
-        symbols.add("bnbbtc");
-        symbols.add("ethbtc");
-        startOrderBook(mkt, symbols, depth, isRest, isWs);
+        this.startSnapshotTask(instrument.asString().toUpperCase(), depth);
     }
 
 }

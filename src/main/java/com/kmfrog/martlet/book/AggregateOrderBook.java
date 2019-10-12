@@ -238,7 +238,7 @@ public class AggregateOrderBook /* implements IOrderBook */ {
                 }
             }
 
-            return price == levels.firstLongKey();
+            return levels.size() > 0 && price == levels.firstLongKey();
         } finally {
             lock.unlock();
         }

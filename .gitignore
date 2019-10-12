@@ -4,6 +4,10 @@
 .classpath
 .factorypath
 
+# sts
+.sts4-cache/
+
+
 # maven
 target/
 

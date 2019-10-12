@@ -1,5 +1,7 @@
 package com.kmfrog.martlet.feed;
 
+import com.alibaba.fastjson.JSONObject;
+
 /**
  * websocket数据监听器。
  * @author dust Oct 11, 2019
@@ -7,7 +9,9 @@ package com.kmfrog.martlet.feed;
  */
 public interface WsDataListener {
 
-    Object onMessage(String msg);
+    void onMessage(String msg);
+    
+    void onJSON(JSONObject json);
     
     void onReset(int errCode, String reason);
 

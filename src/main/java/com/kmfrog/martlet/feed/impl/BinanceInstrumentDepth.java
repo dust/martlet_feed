@@ -45,61 +45,49 @@ public class BinanceInstrumentDepth implements WsDataListener, SnapshotDataListe
     }
 
     @Override
-    public Object onMessage(String msg) {
-        DefaultJSONParser parser = new DefaultJSONParser(msg);
-        System.out.println("\n################\n");
-        System.out.println(msg);
-        System.out.println("\n################\n");
-//        try {
-//            JSONObject root = parser.parseObject();
-//            String evtName = root.getString("e");
-//            String symbol = root.getString("s");
-//            long evtFirstId = root.getLongValue("U");
-//            long evtLastId = root.getLongValue("u");
-//            // logger.info("1111. {}|{}|{}, {}",lastUpdateId.get(), evtFirstId, evtLastId, lastSnapshotId.get());
-//            if (!evtName.equalsIgnoreCase("depthUpdate") || !symbol.equalsIgnoreCase(instrument.asString())) {
-//                return null;
-//            }
-//
-//            lock.lock();
-//            try {
-//                // long evtTime = root.getLongValue("E");
-//                JSONArray bids = root.getJSONArray("b");
-//                JSONArray asks = root.getJSONArray("a");
-//
-//                long lastId = lastUpdateId.get();
-//                if (lastId == 0) {
-//                    // 第一次收到event, lastId使用快照的lastUpdateId
-//                    lastId = lastSnapshotId.get();
-//                }
-//                if (evtFirstId > lastId + 1) {
-//                    // event第一个事件id比本地副本大，本地副本（快照)过旧.
-//                    logger.info("a stale local copy. {}|{}|{}, {}", lastUpdateId.get(), evtFirstId, evtLastId, lastId);
-//                    reset(true, false);
-//                    return null;
-//                }
-//                if (evtLastId < lastId + 1) {
-//                    logger.info("a stale event. {}|{}|{}, {}", lastUpdateId.get(), evtFirstId, evtLastId, lastId);
-//                    // 或者最后一个事件id比本地副本小。丢弃，等待event增长。
-//                    return null;
-//                }
-//                // System.out.println("\n&&&&&&&&&&&&&&&&&&&&&&&&&&\n");
-//                // System.out.println(bids);
-//                // System.out.println("\n***************************\n");
-//                updatePriceLevel(Side.BUY, bids);
-//                updatePriceLevel(Side.SELL, asks);
-//                // logger.info("onMessage. {}|{}|{}, {}", lastUpdateId.get(), evtFirstId, evtLastId, lastId);
-//                lastUpdateId.set(evtLastId);
-//            } finally {
-//                lock.unlock();
-//            }
-//
-//        } catch (Exception ex) {
-//            logger.error(ex.getMessage(), ex);
-//        } finally {
-//            parser.close();
-//        }
-        return null;
+    public void onMessage(String msg) {
+        //useless
+    }
+
+    @Override
+    public void onJSON(JSONObject root) {
+        String evtName = root.getString("e");
+        String symbol = root.getString("s");
+        long evtFirstId = root.getLongValue("U");
+        long evtLastId = root.getLongValue("u");
+        // logger.info("onJSON {}|{}|{}, {}",lastUpdateId.get(), evtFirstId, evtLastId, lastSnapshotId.get());
+        if (!evtName.equalsIgnoreCase("depthUpdate") || !symbol.equalsIgnoreCase(instrument.asString())) {
+            return;
+        }
+
+        lock.lock();
+        try {
+            // long evtTime = root.getLongValue("E");
+            JSONArray bids = root.getJSONArray("b");
+            JSONArray asks = root.getJSONArray("a");
+
+            long lastId = lastUpdateId.get();
+            if (lastId == 0) {
+                // 第一次收到event, lastId使用快照的lastUpdateId
+                lastId = lastSnapshotId.get();
+            }
+            if (evtFirstId > lastId + 1) {
+                // event第一个事件id比本地副本大，本地副本（快照)过旧.
+                logger.info("a stale local copy. {}|{}|{}, {}", lastUpdateId.get(), evtFirstId, evtLastId, lastId);
+                reset(true, false);
+            }
+            if (evtLastId < lastId + 1) {
+                logger.info("a stale event. {}|{}|{}, {}", lastUpdateId.get(), evtFirstId, evtLastId, lastId);
+                // 或者最后一个事件id比本地副本小。丢弃，等待event增长。
+                return;
+            }
+            updatePriceLevel(Side.BUY, bids);
+            updatePriceLevel(Side.SELL, asks);
+            // logger.info("onMessage. {}|{}|{}, {}", lastUpdateId.get(), evtFirstId, evtLastId, lastId);
+            lastUpdateId.set(evtLastId);
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
@@ -112,9 +100,7 @@ public class BinanceInstrumentDepth implements WsDataListener, SnapshotDataListe
         DefaultJSONParser parser = new DefaultJSONParser(snap);
         try {
             JSONObject root = parser.parseObject();
-            
-            
-            
+
             JSONArray bids = root.getJSONArray("bids");
             JSONArray asks = root.getJSONArray("asks");
             // System.out.println("\n~~~~~~~~~~~~~~\n");
