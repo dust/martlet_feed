@@ -75,8 +75,8 @@ public class App implements ResetController {
         AggregateOrderBook bnbbtcBook = app.makesureOrderBook(bnbbtc.asLong());
         AggregateOrderBook bnbethBook = app.makesureOrderBook(bnbeth.asLong());
 
-        BinanceInstrumentDepth btc = new BinanceInstrumentDepth(bnbbtc, bnbbtcBook, app);
-        BinanceInstrumentDepth eth = new BinanceInstrumentDepth(bnbeth, bnbethBook, app);
+        BinanceInstrumentDepth btc = new BinanceInstrumentDepth(bnbbtc, bnbbtcBook, Source.Binance, app);
+        BinanceInstrumentDepth eth = new BinanceInstrumentDepth(bnbeth, bnbethBook, Source.Binance, app);
         app.startSnapshotTask("BNBBTC", btc);
         app.startSnapshotTask("BNBETH", eth);
         BaseWebSocketHandler handler = new BinanceWebSocketHandler(

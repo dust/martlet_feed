@@ -13,33 +13,25 @@ import com.alibaba.fastjson.parser.DefaultJSONParser;
 import com.kmfrog.martlet.book.AggregateOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.Side;
-import com.kmfrog.martlet.feed.Source;
+import com.kmfrog.martlet.feed.BaseInstrumentDepth;
 import com.kmfrog.martlet.feed.ResetController;
-import com.kmfrog.martlet.feed.SnapshotDataListener;
-import com.kmfrog.martlet.feed.WsDataListener;
+import com.kmfrog.martlet.feed.Source;
 
 /**
- * 
+ * 币安深度
  * @author dust Oct 10, 2019
  *
  */
-public class BinanceInstrumentDepth implements WsDataListener, SnapshotDataListener {
-
-    private Logger logger = LoggerFactory.getLogger(BinanceInstrumentDepth.class);
-
-    private AggregateOrderBook book;
-    private final Instrument instrument;
-    private final Source source = Source.Binance;
+public class BinanceInstrumentDepth extends BaseInstrumentDepth {
+    
     private final AtomicLong lastUpdateId;
     private final AtomicLong lastSnapshotId;
-    private final ResetController resetController;
-    private final int MAX_DEPTH = 100;
+//    private final int MAX_DEPTH = 100;
     private ReentrantLock lock = new ReentrantLock();
 
-    public BinanceInstrumentDepth(Instrument instrument, AggregateOrderBook book, ResetController resetable) {
-        this.instrument = instrument;
-        this.resetController = resetable;
-        this.book = book;
+    public BinanceInstrumentDepth(Instrument instrument, AggregateOrderBook book, Source source,
+            ResetController controller) {
+        super(instrument, book, source, controller);
         lastUpdateId = new AtomicLong(0);
         lastSnapshotId = new AtomicLong(0);
     }
