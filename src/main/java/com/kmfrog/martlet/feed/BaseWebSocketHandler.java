@@ -1,9 +1,14 @@
 package com.kmfrog.martlet.feed;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.zip.GZIPInputStream;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
@@ -23,11 +28,15 @@ public abstract class BaseWebSocketHandler {
     private ReentrantLock lock;
     private WebSocketDaemon websocket;
 
+    private AtomicLong counter;
+
     public BaseWebSocketHandler() {
         lock = new ReentrantLock();
         client = new WebSocketClient();
+
+        counter = new AtomicLong(0L);
     }
-    
+
     void setWebSocket(WebSocketDaemon websocket) {
         this.websocket = websocket;
     }
@@ -48,7 +57,23 @@ public abstract class BaseWebSocketHandler {
 
     public abstract String getWebSocketUrl();
 
-    protected abstract void onMessage(String msg);
+    /**
+     * 文本消息。
+     * @param session
+     * @param msg
+     */
+    protected abstract void onMessage(Session session, String msg);
+
+    /**
+     * 二进制消息。默认使用gzip解压二进制数据流为字符串，然后再调用onMessage
+     * @param session
+     * @param is
+     * @throws IOException
+     */
+    protected void onBinaryMessage(Session session, InputStream is) throws IOException {
+        String msg = this.uncompressGzip(is);
+        onMessage(session, msg);
+    }
 
     protected void onError(Throwable ex) {
         logger.error(ex.getMessage(), ex);
@@ -123,6 +148,23 @@ public abstract class BaseWebSocketHandler {
 
     public Set<String> getSymbols() {
         return symbolNames;
+    }
+
+    protected String uncompressGzip(InputStream is) throws IOException {
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+//        final Deflate64CompressorInputStream zin = new Deflate64CompressorInputStream(is);
+        GZIPInputStream zin = new GZIPInputStream(is);
+        final byte[] buffer = new byte[1024];
+        int offset;
+        while (-1 != (offset = zin.read(buffer))) {
+            out.write(buffer, 0, offset);
+        }
+        return out.toString();
+
+    }
+
+    protected long generateReqId() {
+        return System.currentTimeMillis() + counter.incrementAndGet();
     }
 
 }

@@ -48,7 +48,7 @@ public class HbexWebSocketHandler extends BaseWebSocketHandler {
     }
 
     @Override
-    protected void onMessage(String msg) {
+    protected void onMessage(Session sess, String msg) {
         logger.debug("{},{}", wsUrl, msg);
     }
 

@@ -1,5 +1,7 @@
 package com.kmfrog.martlet.feed;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Set;
 
 import org.eclipse.jetty.websocket.api.Session;
@@ -8,8 +10,6 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
-
-import com.kmfrog.martlet.feed.impl.BinanceWebSocketHandler;
 
 /**
  * websocket实例，它能被轮询保持正常活跃。
@@ -53,8 +53,13 @@ public class WebSocketDaemon{
     }
 
     @OnWebSocketMessage
-    public void onMessage(String msg) {
-        handler.onMessage(msg);
+    public void onMessage(Session session, String msg) {
+        handler.onMessage(session, msg);
+    }
+    
+    @OnWebSocketMessage
+    public void onBinaryMessage(Session session, InputStream is) throws IOException {
+        handler.onBinaryMessage(session, is);
     }
 
     public void keepAlive() {

@@ -38,7 +38,7 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
 
     @Override
     public void onMessage(String msg) {
-        //useless
+        //not use.
     }
 
     @Override
@@ -145,13 +145,6 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
 
     }
 
-    private void updatePriceLevel(Side side, JSONArray priceLevels) {
-        for (Object priceLevel : priceLevels) {
-            JSONArray pair = (JSONArray) priceLevel;
-            long price = pair.getBigDecimal(0).multiply(BigDecimal.valueOf(instrument.getPriceFactor())).longValue();
-            long size = pair.getBigDecimal(1).multiply(BigDecimal.valueOf(instrument.getSizeFactor())).longValue();
-            book.update(side, price, size, source.ordinal());
-        }
-    }
+    
 
 }

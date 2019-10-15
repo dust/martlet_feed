@@ -1,8 +1,6 @@
 package com.kmfrog.martlet.feed;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -17,6 +15,8 @@ import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.feed.impl.BinanceInstrumentDepth;
 import com.kmfrog.martlet.feed.impl.BinanceWebSocketHandler;
+import com.kmfrog.martlet.feed.impl.HuobiInstrumentDepth;
+import com.kmfrog.martlet.feed.impl.HuobiWebSocketHandler;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
 
@@ -70,26 +70,39 @@ public class App implements ResetController {
         // Binance bin = new Binance("https://www.binance.com/api/v1/depth?symbol=%s&limit=1000",
         // "wss://stream.binance.com:9443/ws/bnbbtc@depth", "BNBBTC");
         App app = new App();
-        Instrument bnbbtc = new Instrument("BNBBTC", 8, 8);
-        Instrument bnbeth = new Instrument("BNBETH", 8, 8);
-        AggregateOrderBook bnbbtcBook = app.makesureOrderBook(bnbbtc.asLong());
-        AggregateOrderBook bnbethBook = app.makesureOrderBook(bnbeth.asLong());
-
-        BinanceInstrumentDepth btc = new BinanceInstrumentDepth(bnbbtc, bnbbtcBook, Source.Binance, app);
-        BinanceInstrumentDepth eth = new BinanceInstrumentDepth(bnbeth, bnbethBook, Source.Binance, app);
-        app.startSnapshotTask("BNBBTC", btc);
-        app.startSnapshotTask("BNBETH", eth);
+        Instrument bnbbtc = new Instrument("BTCUSDT", 8, 8);
+//        Instrument bnbeth = new Instrument("BNBETH", 8, 8);
+        AggregateOrderBook btcBook = app.makesureOrderBook(bnbbtc.asLong());
+//        AggregateOrderBook bnbethBook = app.makesureOrderBook(bnbeth.asLong());
+//
+        BinanceInstrumentDepth btc = new BinanceInstrumentDepth(bnbbtc, btcBook, Source.Binance, app);
+//        BinanceInstrumentDepth eth = new BinanceInstrumentDepth(bnbeth, bnbethBook, Source.Binance, app);
+        app.startSnapshotTask("BTCUSDT", btc);
+//        app.startSnapshotTask("BNBETH", eth);
         BaseWebSocketHandler handler = new BinanceWebSocketHandler(
-                "wss://stream.binance.com:9443/stream?streams=%s@depth", new String[] { "bnbbtc", "bnbeth" },
-                new BinanceInstrumentDepth[] { btc, eth });
+                "wss://stream.binance.com:9443/stream?streams=%s@depth", new String[] { "btcusdt"},
+                new BinanceInstrumentDepth[] { btc });
         app.startWebSocket(Source.Binance, handler);
+        
+        Instrument btcusdt = new Instrument("BTCUSDT", 8, 8);
+//        AggregateOrderBook btcBook = app.makesureOrderBook(btcusdt.asLong());
+//        
+        HuobiInstrumentDepth hbBtc = new HuobiInstrumentDepth(btcusdt, btcBook, Source.Huobi, app);
+        BaseWebSocketHandler hbHandler = new HuobiWebSocketHandler(new String[] {"btcusdt"}, new HuobiInstrumentDepth[] {
+                hbBtc 
+        });
+        app.startWebSocket(Source.Huobi, hbHandler);
 
         while (true) {
             Thread.sleep(10000L);
-            bnbbtcBook.dump(Side.BUY, System.out);
+            btcBook.dump(Side.BUY, System.out);
             System.out.println("\n#####\n");
-            bnbethBook.dump(Side.BUY, System.out);
-            System.out.println("\n=====\n");
+//            bnbethBook.dump(Side.BUY, System.out);
+//            System.out.println("\n=====\n");
+//            btcBook.dump(Side.BUY, System.out);
+//            System.out.println("\n====\n");
+            
+            
         }
     }
 

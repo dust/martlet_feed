@@ -3,6 +3,8 @@ package com.kmfrog.martlet.feed.impl;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.eclipse.jetty.websocket.api.Session;
+
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.DefaultJSONParser;
 import com.kmfrog.martlet.feed.BaseWebSocketHandler;
@@ -31,11 +33,11 @@ public class BinanceWebSocketHandler extends BaseWebSocketHandler {
     }
 
     @Override
-    public void onMessage(String msg) {
+    public void onMessage(Session sess, String msg) {
         DefaultJSONParser parser = new DefaultJSONParser(msg);
-        // System.out.println("\n################\n");
-        // System.out.println(msg);
-        // System.out.println("\n################\n");
+//         System.out.println("\n################\n");
+//         System.out.println(msg);
+//         System.out.println("\n################\n");
         try {
             JSONObject root = parser.parseObject();
             String symbolName = root.getString("stream");
