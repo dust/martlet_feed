@@ -53,9 +53,9 @@ public class BhexWebSocketHandler extends BaseWebSocketHandler {
         try {
             JSONObject root = parser.parseObject();
             if (!root.containsKey("symbol")) {
-                if (root.containsKey("code")) {
+//                if (root.containsKey("code")) {
                     logger.warn("err: {}", msg);
-                }
+//                }
                 // else if(root.containsKey("pong")) {
                 //
                 // }

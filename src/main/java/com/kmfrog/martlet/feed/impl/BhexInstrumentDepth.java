@@ -39,7 +39,7 @@ public class BhexInstrumentDepth extends BaseInstrumentDepth {
         if(root.containsKey("data")) {
             JSONArray data = root.getJSONArray("data");
             JSONObject main = data.getJSONObject(0);
-            boolean isSnapshot = root.getBooleanValue("f");
+//            boolean isSnapshot = root.getBooleanValue("f");
             
             long t = main.getLongValue("t");
             long id = Long.valueOf(main.getString("v").replace("_", ""));
@@ -50,10 +50,10 @@ public class BhexInstrumentDepth extends BaseInstrumentDepth {
             try {
                 if (id > lastUpdateId.get()) {
                     
-                    if(isSnapshot) {
+//                    if(isSnapshot) {
                         book.clearSource(Side.BUY, source.ordinal());
                         book.clearSource(Side.SELL, source.ordinal());
-                    }
+//                    }
                     
                     updatePriceLevel(Side.BUY, bids);
                     updatePriceLevel(Side.SELL, asks);

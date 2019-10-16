@@ -1,5 +1,8 @@
 package com.kmfrog.martlet;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+
 public interface C {
     
     long[] POWERS_OF_TEN = new long[] {
@@ -23,6 +26,9 @@ public interface C {
             100000000000000000L,
             1000000000000000000L,
         };
+    
+    static final long EPOCH_MILLIS = LocalDate.now().atStartOfDay(ZoneId.systemDefault())
+            .toInstant().toEpochMilli();
 
 
 }
