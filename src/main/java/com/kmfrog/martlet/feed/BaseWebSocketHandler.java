@@ -33,6 +33,7 @@ public abstract class BaseWebSocketHandler {
     public BaseWebSocketHandler() {
         lock = new ReentrantLock();
         client = new WebSocketClient();
+        
 
         counter = new AtomicLong(0L);
     }

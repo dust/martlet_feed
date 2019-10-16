@@ -26,6 +26,7 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
     
     private final AtomicLong lastUpdateId;
     private final AtomicLong lastSnapshotId;
+    private final AtomicLong lastUpdateTime;
 //    private final int MAX_DEPTH = 100;
     private ReentrantLock lock = new ReentrantLock();
 
@@ -34,6 +35,7 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
         super(instrument, book, source, controller);
         lastUpdateId = new AtomicLong(0);
         lastSnapshotId = new AtomicLong(0);
+        lastUpdateTime = new AtomicLong(0);
     }
 
     @Override
@@ -54,7 +56,7 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
 
         lock.lock();
         try {
-            // long evtTime = root.getLongValue("E");
+            lastUpdateTime.set(root.getLongValue("E"));
             JSONArray bids = root.getJSONArray("b");
             JSONArray asks = root.getJSONArray("a");
 

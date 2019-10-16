@@ -10,6 +10,7 @@ public enum Source {
     Binance,
     Huobi,
     CoinbasePro,
-    Okex
+    Okex,
+    Bhex
 
 }
