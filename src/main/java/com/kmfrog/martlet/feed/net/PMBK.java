@@ -2,8 +2,6 @@ package com.kmfrog.martlet.feed.net;
 
 import java.nio.ByteBuffer;
 
-import com.paritytrading.parity.net.ProtocolMessage;
-
 /**
  * Common definitions.
  */

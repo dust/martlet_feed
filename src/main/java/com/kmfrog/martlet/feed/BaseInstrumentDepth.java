@@ -3,6 +3,7 @@ package com.kmfrog.martlet.feed;
 import java.math.BigDecimal;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.alibaba.fastjson.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,5 +49,26 @@ public abstract class BaseInstrumentDepth implements WsDataListener, SnapshotDat
             book.update(side, price, size, source.ordinal());
         }
     }
+
+    @Override
+    public void onMessage(String msg) {
+
+    }
+
+    @Override
+    public void onJSON(JSONObject json, boolean isSnapshot) {
+
+    }
+
+    @Override
+    public void onReset(int errCode, String reason) {
+
+    }
+
+    @Override
+    public Object onSnapshot(String msg){
+        return null;
+    }
+
 
 }

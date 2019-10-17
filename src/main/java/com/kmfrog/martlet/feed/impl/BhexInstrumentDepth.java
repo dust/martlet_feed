@@ -35,7 +35,7 @@ public class BhexInstrumentDepth extends BaseInstrumentDepth {
     }
 
     @Override
-    public void onJSON(JSONObject root) {
+    public void onJSON(JSONObject root, boolean isSnapshot) {
         if(root.containsKey("data")) {
             JSONArray data = root.getJSONArray("data");
             JSONObject main = data.getJSONObject(0);

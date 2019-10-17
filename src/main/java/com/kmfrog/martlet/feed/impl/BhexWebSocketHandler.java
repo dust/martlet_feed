@@ -64,7 +64,7 @@ public class BhexWebSocketHandler extends BaseWebSocketHandler {
             String symbolName = root.getString("symbol");
             if (listenersMap.containsKey(symbolName)) {
                 // root.getJSONArray -\-> JSONObject, 所以传入了root
-                listenersMap.get(symbolName).onJSON(root);
+                listenersMap.get(symbolName).onJSON(root, false);
             }
         } catch (Exception ex) {
             logger.warn(ex.getMessage(), ex);
@@ -74,6 +74,7 @@ public class BhexWebSocketHandler extends BaseWebSocketHandler {
 
     }
 
+    @Override
     public Session keepAlive() {
         Session ret = super.keepAlive();
         ByteBuffer payload = ByteBuffer.wrap(String.format("{\"ping\": %d", this.generateReqId()).getBytes());

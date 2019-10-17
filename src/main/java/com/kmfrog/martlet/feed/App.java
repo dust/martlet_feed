@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.kmfrog.martlet.feed.impl.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,9 +14,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.kmfrog.martlet.book.AggregateOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.Side;
-import com.kmfrog.martlet.feed.impl.BhexInstrumentDepth;
-import com.kmfrog.martlet.feed.impl.BhexWebSocketHandler;
-import com.kmfrog.martlet.feed.impl.BinanceInstrumentDepth;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
 
@@ -93,23 +91,29 @@ public class App implements ResetController {
 //        });
 //        app.startWebSocket(Source.Huobi, hbHandler);
         
-        Instrument xie = new Instrument("XIEPTCN", 4, 4);
-        AggregateOrderBook xieBook = app.makesureOrderBook(xie.asLong());
-        BhexInstrumentDepth xieDepth = new BhexInstrumentDepth(xie, xieBook, Source.Bhex, app);
-        BaseWebSocketHandler hbexHandler = new BhexWebSocketHandler(new String[] {"XIEPTCN"}, new BhexInstrumentDepth[] {xieDepth});
-        app.startWebSocket(Source.Bhex, hbexHandler);
+//        Instrument xie = new Instrument("XIEPTCN", 4, 4);
+//        AggregateOrderBook xieBook = app.makesureOrderBook(xie.asLong());
+//        BhexInstrumentDepth xieDepth = new BhexInstrumentDepth(xie, xieBook, Source.Bhex, app);
+//        BaseWebSocketHandler hbexHandler = new BhexWebSocketHandler(new String[] {"XIEPTCN"}, new BhexInstrumentDepth[] {xieDepth});
+//        app.startWebSocket(Source.Bhex, hbexHandler);
+
+        OkexInstrumentDepth okexDepth = new OkexInstrumentDepth(bnbbtc, btcBook, Source.Okex,  app);
+        OkexWebSocketHandler okexHandler = new OkexWebSocketHandler(new String[]{"BTC-USDT"}, new OkexInstrumentDepth[]{okexDepth});
+        app.startWebSocket(Source.Okex, okexHandler);
 
         while (true) {
             Thread.sleep(10000L);
             btcBook.dump(Side.BUY, System.out);
             System.out.println("\n#####\n");
+
+            app.websocketDaemons.get(Source.Okex).keepAlive();
 //            bnbethBook.dump(Side.BUY, System.out);
 //            System.out.println("\n=====\n");
 //            btcBook.dump(Side.BUY, System.out);
 //            System.out.println("\n====\n");
             
-            xieBook.dump(Side.BUY, System.out);
-            app.websocketDaemons.get(Source.Bhex).keepAlive();
+//            xieBook.dump(Side.BUY, System.out);
+//            app.websocketDaemons.get(Source.Bhex).keepAlive();
             
         }
     }

@@ -14,7 +14,6 @@ import com.paritytrading.nassau.moldudp64.MoldUDP64DefaultMessageStore;
 import com.paritytrading.nassau.moldudp64.MoldUDP64DownstreamPacket;
 import com.paritytrading.nassau.moldudp64.MoldUDP64RequestServer;
 import com.paritytrading.nassau.moldudp64.MoldUDP64Server;
-import com.paritytrading.parity.net.pmd.PMD;
 
 public class MarketBroadcast {
 
@@ -81,7 +80,7 @@ public class MarketBroadcast {
     }
 
     void version() {
-        version.version = PMD.VERSION;
+        version.version = PMBK.VERSION;
 
         send(version);
     }

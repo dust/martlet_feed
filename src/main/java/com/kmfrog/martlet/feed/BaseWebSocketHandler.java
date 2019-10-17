@@ -1,14 +1,17 @@
 package com.kmfrog.martlet.feed;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.Inflater;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
@@ -16,7 +19,11 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eclipse.jetty.websocket.common.WebSocketSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.commons.compress.compressors.deflate64.Deflate64CompressorInputStream;
 
+/**
+ * author: Dust
+ */
 public abstract class BaseWebSocketHandler {
 
     protected Logger logger = LoggerFactory.getLogger(getClass());
@@ -33,7 +40,7 @@ public abstract class BaseWebSocketHandler {
     public BaseWebSocketHandler() {
         lock = new ReentrantLock();
         client = new WebSocketClient();
-        
+
 
         counter = new AtomicLong(0L);
     }
@@ -60,6 +67,7 @@ public abstract class BaseWebSocketHandler {
 
     /**
      * 文本消息。
+     *
      * @param session
      * @param msg
      */
@@ -67,6 +75,7 @@ public abstract class BaseWebSocketHandler {
 
     /**
      * 二进制消息。默认使用gzip解压二进制数据流为字符串，然后再调用onMessage
+     *
      * @param session
      * @param is
      * @throws IOException
@@ -161,7 +170,24 @@ public abstract class BaseWebSocketHandler {
             out.write(buffer, 0, offset);
         }
         return out.toString();
+    }
 
+    public String uncompress(InputStream is) {
+        try {
+            final ByteArrayOutputStream out = new ByteArrayOutputStream();
+            final Deflate64CompressorInputStream zin = new Deflate64CompressorInputStream(is);
+            final byte[] buffer = new byte[1024];
+            int offset;
+            while (-1 != (offset = zin.read(buffer))) {
+                out.write(buffer, 0, offset);
+            }
+            String result = out.toString();
+            zin.close();
+            out.close();
+            return result;
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected long generateReqId() {

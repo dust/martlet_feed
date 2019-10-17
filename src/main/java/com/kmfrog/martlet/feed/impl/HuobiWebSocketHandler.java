@@ -90,7 +90,7 @@ public class HuobiWebSocketHandler extends BaseWebSocketHandler {
             
             String channelName = root.getString("ch");
             if (listenersMap.containsKey(channelName)) {
-                listenersMap.get(channelName).onJSON(root.getJSONObject("tick"));
+                listenersMap.get(channelName).onJSON(root.getJSONObject("tick"), true);
             }
         }
         catch(Exception ex) {

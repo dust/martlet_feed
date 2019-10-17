@@ -42,7 +42,7 @@ public class BinanceWebSocketHandler extends BaseWebSocketHandler {
             JSONObject root = parser.parseObject();
             String symbolName = root.getString("stream");
             if (listenersMap.containsKey(symbolName)) {
-                listenersMap.get(symbolName).onJSON(root.getJSONObject("data"));
+                listenersMap.get(symbolName).onJSON(root.getJSONObject("data"), false);
             }
         } catch (Exception ex) {
             logger.warn(ex.getMessage(), ex);

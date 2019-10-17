@@ -44,11 +44,12 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
     }
 
     @Override
-    public void onJSON(JSONObject root) {
+    public void onJSON(JSONObject root, boolean isSnapshot) {
         String evtName = root.getString("e");
         String symbol = root.getString("s");
         long evtFirstId = root.getLongValue("U");
         long evtLastId = root.getLongValue("u");
+
         // logger.info("onJSON {}|{}|{}, {}",lastUpdateId.get(), evtFirstId, evtLastId, lastSnapshotId.get());
         if (!evtName.equalsIgnoreCase("depthUpdate") || !symbol.equalsIgnoreCase(instrument.asString())) {
             return;

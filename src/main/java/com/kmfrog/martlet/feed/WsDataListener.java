@@ -11,7 +11,7 @@ public interface WsDataListener {
 
     void onMessage(String msg);
     
-    void onJSON(JSONObject json);
+    void onJSON(JSONObject json, boolean isSnapshot);
     
     void onReset(int errCode, String reason);
 

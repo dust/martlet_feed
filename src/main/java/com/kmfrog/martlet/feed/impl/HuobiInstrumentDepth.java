@@ -31,7 +31,7 @@ public class HuobiInstrumentDepth extends BaseInstrumentDepth {
     }
 
     @Override
-    public void onJSON(JSONObject json) {
+    public void onJSON(JSONObject json, boolean isSnapshot) {
         lock.lock();
         try {
             long ts = json.getLongValue("ts");
