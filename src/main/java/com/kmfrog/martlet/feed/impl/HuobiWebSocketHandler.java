@@ -37,6 +37,7 @@ public class HuobiWebSocketHandler extends BaseWebSocketHandler {
 
     @Override
     public void onConnect(Session session) {
+        super.onConnect(session);
         try {
             final String subFmt = "{\"sub\": \"market.%s.depth.step0\", \"id\": \"%d\"}";
             symbolNames.stream().forEach(symbol -> {

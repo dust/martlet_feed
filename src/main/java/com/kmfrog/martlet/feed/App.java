@@ -72,24 +72,24 @@ public class App implements ResetController {
         AggregateOrderBook btcBook = app.makesureOrderBook(bnbbtc.asLong());
 //        AggregateOrderBook bnbethBook = app.makesureOrderBook(bnbeth.asLong());
 //
-//        BinanceInstrumentDepth btc = new BinanceInstrumentDepth(bnbbtc, btcBook, Source.Binance, app);
+        BinanceInstrumentDepth btc = new BinanceInstrumentDepth(bnbbtc, btcBook, Source.Binance, app);
 ////        BinanceInstrumentDepth eth = new BinanceInstrumentDepth(bnbeth, bnbethBook, Source.Binance, app);
-//        app.startSnapshotTask("BTCUSDT", btc);
+        app.startSnapshotTask("BTCUSDT", btc);
 ////        app.startSnapshotTask("BNBETH", eth);
-//        BaseWebSocketHandler handler = new BinanceWebSocketHandler(
-//                "wss://stream.binance.com:9443/stream?streams=%s@depth", new String[] { "btcusdt"},
-//                new BinanceInstrumentDepth[] { btc });
-//        app.startWebSocket(Source.Binance, handler);
+        BaseWebSocketHandler handler = new BinanceWebSocketHandler(
+                "wss://stream.binance.com:9443/stream?streams=%s@depth", new String[] { "btcusdt"},
+                new BinanceInstrumentDepth[] { btc });
+        app.startWebSocket(Source.Binance, handler);
         
 //        Instrument btcusdt = new Instrument("BTCUSDT", 8, 8);
 //        AggregateOrderBook btcBook = app.makesureOrderBook(btcusdt.asLong());
 //        
 
-//        HuobiInstrumentDepth hbBtc = new HuobiInstrumentDepth(btcusdt, btcBook, Source.Huobi, app);
-//        BaseWebSocketHandler hbHandler = new HuobiWebSocketHandler(new String[] {"btcusdt"}, new HuobiInstrumentDepth[] {
-//                hbBtc 
-//        });
-//        app.startWebSocket(Source.Huobi, hbHandler);
+        HuobiInstrumentDepth hbBtc = new HuobiInstrumentDepth(bnbbtc, btcBook, Source.Huobi, app);
+        BaseWebSocketHandler hbHandler = new HuobiWebSocketHandler(new String[] {"btcusdt"}, new HuobiInstrumentDepth[] {
+                hbBtc
+        });
+        app.startWebSocket(Source.Huobi, hbHandler);
         
 //        Instrument xie = new Instrument("XIEPTCN", 4, 4);
 //        AggregateOrderBook xieBook = app.makesureOrderBook(xie.asLong());
@@ -108,9 +108,8 @@ public class App implements ResetController {
 
             app.websocketDaemons.get(Source.Okex).keepAlive();
 //            bnbethBook.dump(Side.BUY, System.out);
-//            System.out.println("\n=====\n");
-//            btcBook.dump(Side.BUY, System.out);
-//            System.out.println("\n====\n");
+            btcBook.dump(Side.SELL, System.out);
+            System.out.println("\n====\n");
             
 //            xieBook.dump(Side.BUY, System.out);
 //            app.websocketDaemons.get(Source.Bhex).keepAlive();
