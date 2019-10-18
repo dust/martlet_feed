@@ -51,8 +51,8 @@ public class BhexInstrumentDepth extends BaseInstrumentDepth {
                 if (id > lastUpdateId.get()) {
                     
 //                    if(isSnapshot) {
-                        book.clearSource(Side.BUY, source.ordinal());
-                        book.clearSource(Side.SELL, source.ordinal());
+                        book.clear(Side.BUY, source.ordinal());
+                        book.clear(Side.SELL, source.ordinal());
 //                    }
                     
                     updatePriceLevel(Side.BUY, bids);

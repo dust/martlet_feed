@@ -132,8 +132,8 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
             if (isRest) {
                 lastSnapshotId.set(0);
                 lastUpdateId.set(0);
-                book.clearSource(Side.BUY, source.ordinal());
-                book.clearSource(Side.SELL, source.ordinal());
+                book.clear(Side.BUY, source.ordinal());
+                book.clear(Side.SELL, source.ordinal());
             }
 
             if (isWs && !isRest) {

@@ -19,6 +19,9 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eclipse.jetty.websocket.common.WebSocketSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.kmfrog.martlet.book.Instrument;
+
 import org.apache.commons.compress.compressors.deflate64.Deflate64CompressorInputStream;
 
 /**
@@ -64,7 +67,7 @@ public abstract class BaseWebSocketHandler {
     }
 
     public abstract String getWebSocketUrl();
-
+    
     /**
      * 文本消息。
      *
@@ -154,6 +157,31 @@ public abstract class BaseWebSocketHandler {
             logger.error("keepAlive [{}]", String.join("/", symbolNames), ex);
         }
         return session;
+    }
+    
+    protected void resubscribe(Instrument instrument, BaseInstrumentDepth depth) {
+        
+    }
+    
+    /**
+     * 重新订阅某个交易对，或者重新建立连接。
+     * @param instrument
+     * @param depth
+     * @param isSubscribe
+     * @param isConnect
+     */
+    public void reset(Instrument instrument, BaseInstrumentDepth depth, boolean isSubscribe, boolean isConnect) {
+        if(isSubscribe && !isConnect) {
+            resubscribe(instrument, depth);
+        }
+        
+        if(isConnect) {
+            if(clientOpened()) {
+                session.close(-1, "missing packet!");
+            }
+            
+            session = connect();
+        }
     }
 
     public Set<String> getSymbols() {

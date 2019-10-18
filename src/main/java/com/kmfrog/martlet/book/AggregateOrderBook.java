@@ -15,7 +15,7 @@ import it.unimi.dsi.fastutil.longs.LongSortedSet;
  * @author dust Sep 30, 2019
  *
  */
-public class AggregateOrderBook /* implements IOrderBook */ {
+public class AggregateOrderBook implements IOrderBook {
 
     private final long instrument;
     private final Long2ObjectRBTreeMap<MultiSrc> bids;
@@ -176,18 +176,8 @@ public class AggregateOrderBook /* implements IOrderBook */ {
         }
     }
 
-    /**
-     * add order from someone source.
-     * 
-     * @param side
-     * @param price
-     * @param quantity
-     * @param source
-     * @return the best bid or offer has change?
-     */
-    public boolean add(Side side, long price, long quantity, int source) {
+    public boolean replace(Side side, long price, long quantity, int source) {
         // bids or asks
-
         Lock lock = side == Side.BUY ? bidLock.writeLock() : askLock.writeLock();
 
         lock.lock();
@@ -195,29 +185,26 @@ public class AggregateOrderBook /* implements IOrderBook */ {
             Long2ObjectRBTreeMap<MultiSrc> levels = getLevels(side);
 
             if (!levels.containsKey(price)) {
-                MultiSrc multiSrc = new MultiSrc(price);
-                multiSrc.addTo(quantity, source);
-                levels.put(price, multiSrc);
+                if (quantity > 0) {
+                    MultiSrc multiSrc = new MultiSrc(price);
+                    multiSrc.updateTo(quantity, source);
+                    levels.put(price, multiSrc);
+                }
             } else {
-                levels.get(price).addTo(quantity, source);
+                long newSize = levels.get(price).updateTo(quantity, source);
+                if(newSize <=0) {
+                    levels.remove(price);
+                }
             }
 
-            return price == levels.firstLongKey();
+            return levels.size() > 0 && price == levels.firstLongKey();
         } finally {
             lock.unlock();
         }
     }
 
-    /**
-     * 增量更新某个来源的订单数。
-     * 
-     * @param side
-     * @param price
-     * @param quantity
-     * @param source
-     * @return
-     */
-    public boolean update(Side side, long price, long quantity, int source) {
+    
+    public boolean incr(Side side, long price, long quantity, int source) {
         Lock lock = side == Side.BUY ? bidLock.writeLock() : askLock.writeLock();
 
         lock.lock();
@@ -228,11 +215,11 @@ public class AggregateOrderBook /* implements IOrderBook */ {
                 // 如果order book中不存在数量为零的此价位，那么也没有意义进行添加。
                 if (quantity > 0L) {
                     MultiSrc multiSrc = new MultiSrc(price);
-                    multiSrc.updateTo(quantity, source);
+                    multiSrc.addTo(quantity, source);
                     levels.put(price, multiSrc);
                 }
             } else {
-                long newSize = levels.get(price).updateTo(quantity, source);
+                long newSize = levels.get(price).addTo(quantity, source);
                 if (newSize <= 0) {
                     levels.remove(price);
                 }
@@ -251,7 +238,7 @@ public class AggregateOrderBook /* implements IOrderBook */ {
      * @param source
      * @return
      */
-    public boolean clearSource(Side side, int source) {
+    public boolean clear(Side side, int source) {
         Lock lock = side == Side.BUY ? bidLock.writeLock() : askLock.writeLock();
 
         lock.lock();

@@ -13,6 +13,9 @@
 # maven
 target/
 
+#Mac
+.DS_Store
+
 # Compiled class file
 *.class
 

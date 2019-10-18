@@ -22,11 +22,12 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
  *
  */
 public class App implements ResetController {
+    private static final Logger logger = LoggerFactory.getLogger(App.class);
+    
     /**
      * 所有交易对的聚合订单表。
      */
     private final Long2ObjectArrayMap<AggregateOrderBook> books;
-    private static final Logger logger = LoggerFactory.getLogger(App.class);
     private static ExecutorService executor = Executors
             .newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("WebSocketRunnable-%d").build());
     private final Map<Source, WebSocketDaemon> websocketDaemons;
@@ -74,12 +75,12 @@ public class App implements ResetController {
 //
         BinanceInstrumentDepth btc = new BinanceInstrumentDepth(bnbbtc, btcBook, Source.Binance, app);
 ////        BinanceInstrumentDepth eth = new BinanceInstrumentDepth(bnbeth, bnbethBook, Source.Binance, app);
-        app.startSnapshotTask("BTCUSDT", btc);
+//        app.startSnapshotTask("BTCUSDT", btc);
 ////        app.startSnapshotTask("BNBETH", eth);
         BaseWebSocketHandler handler = new BinanceWebSocketHandler(
                 "wss://stream.binance.com:9443/stream?streams=%s@depth", new String[] { "btcusdt"},
                 new BinanceInstrumentDepth[] { btc });
-        app.startWebSocket(Source.Binance, handler);
+//        app.startWebSocket(Source.Binance, handler);
         
 //        Instrument btcusdt = new Instrument("BTCUSDT", 8, 8);
 //        AggregateOrderBook btcBook = app.makesureOrderBook(btcusdt.asLong());
@@ -89,7 +90,7 @@ public class App implements ResetController {
         BaseWebSocketHandler hbHandler = new HuobiWebSocketHandler(new String[] {"btcusdt"}, new HuobiInstrumentDepth[] {
                 hbBtc
         });
-        app.startWebSocket(Source.Huobi, hbHandler);
+//        app.startWebSocket(Source.Huobi, hbHandler);
         
 //        Instrument xie = new Instrument("XIEPTCN", 4, 4);
 //        AggregateOrderBook xieBook = app.makesureOrderBook(xie.asLong());
@@ -117,8 +118,9 @@ public class App implements ResetController {
         }
     }
 
-    public void reset(Source mkt, Instrument instrument, BinanceInstrumentDepth depth, boolean isRest, boolean isWs) {
-        this.startSnapshotTask(instrument.asString().toUpperCase(), depth);
+    public void reset(Source mkt, Instrument instrument, BaseInstrumentDepth depth, boolean isSubscribe, boolean isConnect) {
+//        this.startSnapshotTask(instrument.asString().toUpperCase(), depth);
+        websocketDaemons.get(mkt).reset(instrument, depth, isSubscribe, isConnect);
     }
 
 }

@@ -11,6 +11,8 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 
+import com.kmfrog.martlet.book.Instrument;
+
 /**
  * websocket实例，它能被轮询保持正常活跃。
  * 
@@ -49,6 +51,7 @@ public class WebSocketDaemon{
 
     @OnWebSocketConnect
     public void onConnect(Session session) {
+        this.session = session;
         handler.onConnect(session);
     }
 
@@ -64,6 +67,10 @@ public class WebSocketDaemon{
 
     public void keepAlive() {
         session = handler.keepAlive();
+    }
+    
+    public void reset(Instrument instrument, BaseInstrumentDepth depth, boolean isSubscribe, boolean isConnect) {
+        handler.reset(instrument, depth, isSubscribe, isConnect);
     }
 
 }
