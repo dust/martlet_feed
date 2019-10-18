@@ -1,26 +1,33 @@
-
 package com.kmfrog.martlet.book;
+
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import it.unimi.dsi.fastutil.longs.Long2LongRBTreeMap;
 import it.unimi.dsi.fastutil.longs.LongComparators;
 import it.unimi.dsi.fastutil.longs.LongSortedSet;
 
 /**
- * An basic order book.
- * 一个基本订单簿。同源订单。
+ * An basic order book. 一个线程安全的基本订单簿。
  */
-public class OrderBook {
-
+public class OrderBook implements IOrderBook {
     private final long instrument;
 
     private final Long2LongRBTreeMap bids;
     private final Long2LongRBTreeMap asks;
 
+    private final ReadWriteLock bidLock;
+    private final ReadWriteLock askLock;
+
     OrderBook(long instrument) {
         this.instrument = instrument;
 
-        this.bids = new Long2LongRBTreeMap(LongComparators.OPPOSITE_COMPARATOR);
-        this.asks = new Long2LongRBTreeMap(LongComparators.NATURAL_COMPARATOR);
+        bids = new Long2LongRBTreeMap(LongComparators.OPPOSITE_COMPARATOR);
+        asks = new Long2LongRBTreeMap(LongComparators.NATURAL_COMPARATOR);
+
+        bidLock = new ReentrantReadWriteLock();
+        askLock = new ReentrantReadWriteLock();
     }
 
     /**
@@ -38,10 +45,16 @@ public class OrderBook {
      * @return the best bid price or zero if there are no bids
      */
     public long getBestBidPrice() {
-        if (bids.isEmpty())
-            return 0;
+        bidLock.readLock().lock();
+        try {
+            if (bids.isEmpty()) {
+                return 0;
+            }
 
-        return bids.firstLongKey();
+            return bids.firstLongKey();
+        } finally {
+            bidLock.readLock().unlock();
+        }
     }
 
     /**
@@ -50,7 +63,12 @@ public class OrderBook {
      * @return the bid prices
      */
     public LongSortedSet getBidPrices() {
-        return bids.keySet();
+        bidLock.readLock().lock();
+        try {
+            return bids.keySet();
+        } finally {
+            bidLock.readLock().unlock();
+        }
     }
 
     /**
@@ -60,7 +78,12 @@ public class OrderBook {
      * @return the bid level size
      */
     public long getBidSize(long price) {
-        return bids.get(price);
+        bidLock.readLock().lock();
+        try {
+            return bids.get(price);
+        } finally {
+            bidLock.readLock().unlock();
+        }
     }
 
     /**
@@ -69,10 +92,15 @@ public class OrderBook {
      * @return the best ask price or zero if there are no asks
      */
     public long getBestAskPrice() {
-        if (asks.isEmpty())
-            return 0;
-
-        return asks.firstLongKey();
+        askLock.readLock().lock();
+        try {
+            if (asks.isEmpty()) {
+                return 0;
+            }
+            return asks.firstLongKey();
+        } finally {
+            askLock.readLock().unlock();
+        }
     }
 
     /**
@@ -81,7 +109,12 @@ public class OrderBook {
      * @return the ask prices
      */
     public LongSortedSet getAskPrices() {
-        return asks.keySet();
+        askLock.readLock().lock();
+        try {
+            return asks.keySet();
+        } finally {
+            askLock.readLock().unlock();
+        }
     }
 
     /**
@@ -91,32 +124,66 @@ public class OrderBook {
      * @return the ask level size
      */
     public long getAskSize(long price) {
-        return asks.get(price);
+        askLock.readLock().lock();
+        try {
+            return asks.get(price);
+        } finally {
+            askLock.readLock().unlock();
+        }
     }
 
-    boolean add(Side side, long price, long quantity) {
+    public boolean replace(Side side, long price, long quantity, int source) {
         // bids or asks
         Long2LongRBTreeMap levels = getLevels(side);
+        Lock lock = side == Side.BUY ? bidLock.writeLock() : askLock.writeLock();
 
-        levels.addTo(price, quantity);
-
-        return price == levels.firstLongKey();
+        lock.lock();
+        try {
+            if (quantity > 0) {
+                levels.put(price, quantity);
+            } else {
+                levels.remove(price);
+            }
+            return price == levels.firstLongKey();
+        } finally {
+            lock.unlock();
+        }
     }
 
-    boolean update(Side side, long price, long quantity) {
+    public boolean incr(Side side, long price, long quantity, int source) {
+        // bids or asks
         Long2LongRBTreeMap levels = getLevels(side);
+        Lock lock = side == Side.BUY ? bidLock.writeLock() : askLock.writeLock();
 
-        long oldSize = levels.get(price);
-        long newSize = oldSize + quantity;
+        lock.lock();
+        try {
+            long oldSize = levels.get(price);
+            long newSize = oldSize + quantity;
 
-        boolean onBestLevel = price == levels.firstLongKey();
+            boolean onBestLevel = price == levels.firstLongKey();
 
-        if (newSize > 0)
-            levels.put(price, newSize);
-        else
-            levels.remove(price);
+            if (newSize > 0)
+                levels.put(price, newSize);
+            else
+                levels.remove(price);
 
-        return onBestLevel;
+            return onBestLevel;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean clear(Side side, int source) {
+        Long2LongRBTreeMap levels = getLevels(side);
+        Lock lock = side == Side.BUY ? bidLock.writeLock() : askLock.writeLock();
+        
+        lock.lock();
+        try {
+            levels.clear();
+            return true;
+        } finally {
+            lock.unlock();
+        }
     }
 
     private Long2LongRBTreeMap getLevels(Side side) {

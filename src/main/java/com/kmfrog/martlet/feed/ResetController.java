@@ -10,6 +10,14 @@ import com.kmfrog.martlet.feed.impl.BinanceInstrumentDepth;
  */
 public interface ResetController {
     
-    void reset(Source mkt, Instrument instrument, BinanceInstrumentDepth depth, boolean isSnapshot, boolean isWs);
+    /**
+     * 重置某个来源
+     * @param mkt
+     * @param instrument
+     * @param depth
+     * @param resubscribe
+     * @param reconnect
+     */
+    void reset(Source mkt, Instrument instrument, BaseInstrumentDepth depth, boolean resubscribe, boolean reconnect);
 
 }

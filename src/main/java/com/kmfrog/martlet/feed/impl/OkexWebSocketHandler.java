@@ -3,6 +3,8 @@ package com.kmfrog.martlet.feed.impl;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.DefaultJSONParser;
+import com.kmfrog.martlet.book.Instrument;
+import com.kmfrog.martlet.feed.BaseInstrumentDepth;
 import com.kmfrog.martlet.feed.BaseWebSocketHandler;
 import com.kmfrog.martlet.feed.WsDataListener;
 import org.eclipse.jetty.websocket.api.Session;
@@ -41,12 +43,29 @@ public class OkexWebSocketHandler extends BaseWebSocketHandler {
         super.onConnect(session);
         String symbolJoin = String.join("\", \"spot/depth:", symbolNames);
         String sub = String.format("{\"op\": \"subscribe\", \"args\": [\"spot/depth:%s\"]}", symbolJoin);
-        logger.info("sub:{}", sub);
+//        logger.info("sub:{}", sub);
+        send(sub);
+    }
+
+    private void send(String msg) {
         try {
-            session.getRemote().sendString(sub);
+            if(logger.isInfoEnabled()) {
+                logger.info(" send: {}", msg);
+            }
+            session.getRemote().sendString(msg);
         } catch (IOException e) {
             logger.warn(e.getMessage(), e);
         }
+    }
+    
+    
+
+    @Override
+    protected void resubscribe(Instrument instrument, BaseInstrumentDepth depth) {
+        String unsub = String.format("{\"op\": \"unsubscribe\", \"args\": [\"spot/depth:%s\"]}", instrument.asString());
+        send(unsub);
+        String sub = String.format("{\"op\": \"subscribe\", \"args\": [\"spot/depth:%s\"]}", instrument.asString());
+        send(sub);
     }
 
     @Override
@@ -56,7 +75,7 @@ public class OkexWebSocketHandler extends BaseWebSocketHandler {
             return;
         }
         DefaultJSONParser parser = new DefaultJSONParser(msg);
-//        System.out.println("\n################\n");
+//        System.out.println("\n######"+Thread.currentThread().getName()+"##########\n");
 //        System.out.println(msg);
 //        System.out.println("\n################\n");
         try {

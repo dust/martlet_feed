@@ -43,8 +43,8 @@ public class HuobiInstrumentDepth extends BaseInstrumentDepth {
             JSONArray bids = json.getJSONArray("bids");
             JSONArray asks = json.getJSONArray("asks");
 
-            book.clearSource(Side.BUY, source.ordinal());
-            book.clearSource(Side.SELL, source.ordinal());
+            book.clear(Side.BUY, source.ordinal());
+            book.clear(Side.SELL, source.ordinal());
 
             updatePriceLevel(Side.BUY, bids);
             updatePriceLevel(Side.SELL, asks);

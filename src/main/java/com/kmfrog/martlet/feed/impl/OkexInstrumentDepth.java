@@ -19,9 +19,11 @@ public class OkexInstrumentDepth extends BaseInstrumentDepth {
 
     private final AtomicLong lastTimestamp;
     // private final int MAX_DEPTH = 100;
+    // private final AtomicLong lastChecksum;
     private ReentrantLock lock = new ReentrantLock();
 
-    public OkexInstrumentDepth(Instrument instrument, AggregateOrderBook book, Source source, ResetController controller) {
+    public OkexInstrumentDepth(Instrument instrument, AggregateOrderBook book, Source source,
+            ResetController controller) {
         super(instrument, book, source, controller);
         lastTimestamp = new AtomicLong(0L);
     }
@@ -30,28 +32,45 @@ public class OkexInstrumentDepth extends BaseInstrumentDepth {
     public void onJSON(JSONObject root, boolean isSnapshot) {
 
         long ts = root.getDate("timestamp").getTime();
+        // long checksum = root.getLongValue("checksum");
 
         lock.lock();
-        try{
-            if(ts < lastTimestamp.get() && !isSnapshot){
+        try {
+            if (ts < lastTimestamp.get()  && !isSnapshot) {
+                // 第一个推送或过期的推送， 并且不是快照数据（全量）。
                 return;
             }
             JSONArray bids = root.getJSONArray("bids");
             JSONArray asks = root.getJSONArray("asks");
 
-            if(isSnapshot){
-                book.clearSource(Side.BUY, source.ordinal());
-                book.clearSource(Side.SELL, source.ordinal());
+            if (isSnapshot) {
+                book.clear(Side.BUY, source.ordinal());
+                book.clear(Side.SELL, source.ordinal());
             }
 
             updatePriceLevel(Side.BUY, bids);
             updatePriceLevel(Side.SELL, asks);
+            // lastChecksum.set(checksum);
             lastTimestamp.set(ts);
 
-        }
-        finally {
+        } finally {
             lock.unlock();
         }
-
+        checkData();
     }
+
+    private void checkData() {
+        lock.lock();
+        try {
+            if (book.getBestAskPrice() <= book.getBestBidPrice()) {
+                book.clear(Side.BUY, source.ordinal());
+                book.clear(Side.SELL, source.ordinal());
+                resetController.reset(source, instrument, this, true, false);
+                lastTimestamp.set(0L);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
 }

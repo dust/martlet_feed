@@ -40,7 +40,8 @@ public class MultiSrc {
      * @return the new value
      */
     long addTo(long quantity, int source) {
-        return srcSizeMap.addTo(source, quantity);
+        srcSizeMap.addTo(source, quantity);
+        return size();
     }
 
     /**
