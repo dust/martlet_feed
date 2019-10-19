@@ -17,6 +17,13 @@ package com.kmfrog.martlet.book;
 
 import static com.kmfrog.martlet.util.Strings.repeat;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.kmfrog.martlet.C;
 import com.kmfrog.martlet.util.ASCII;
 import com.typesafe.config.Config;
@@ -34,6 +41,9 @@ public class Instrument {
 
     private final long priceFactor;
     private final long sizeFactor;
+    private final BigDecimal priceDec;
+    private final BigDecimal sizeDec;
+    
 
     private String priceFormat;
     private String sizeFormat;
@@ -47,6 +57,9 @@ public class Instrument {
 
         this.priceFactor = C.POWERS_OF_TEN[priceFractionDigits];
         this.sizeFactor  = C.POWERS_OF_TEN[sizeFractionDigits];
+        
+        this.priceDec = BigDecimal.valueOf(priceFactor);
+        this.sizeDec = BigDecimal.valueOf(sizeFactor);
 
         setPriceFormat(1, priceFractionDigits);
         setSizeFormat(1, sizeFractionDigits);
@@ -131,6 +144,8 @@ public class Instrument {
     public void setSizeFormat(int integerDigits, int maxFractionDigits) {
         sizeFormat = getFormat(integerDigits, sizeFractionDigits, maxFractionDigits);
     }
+    
+    
 
     public static Instrument fromConfig(Config config, String path) {
         int priceFractionDigits = config.getInt(path + ".price-fraction-digits");

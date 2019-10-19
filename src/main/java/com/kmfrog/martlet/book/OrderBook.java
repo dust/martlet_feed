@@ -20,7 +20,7 @@ public class OrderBook implements IOrderBook {
     private final ReadWriteLock bidLock;
     private final ReadWriteLock askLock;
 
-    OrderBook(long instrument) {
+    public OrderBook(long instrument) {
         this.instrument = instrument;
 
         bids = new Long2LongRBTreeMap(LongComparators.OPPOSITE_COMPARATOR);
