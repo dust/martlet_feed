@@ -55,9 +55,11 @@ public class InSpreadRunnable implements Runnable {
     public void run() {
         long bid1 = book.getBestBidPrice();
         long ask1 = book.getBestAskPrice();
-        long price = ask1 - getNumBetween(1, ask1 - bid1);
+        long price1 = ask1 - getNumBetween(1, ask1 - bid1);
+        long price2 = bid1 + getNumBetween(2, ask1 - bid1);
+        long price = Math.max(price1, price2);
 
-        if (price < ask1) {
+        if ( price < ask1) {
             // BigDecimal[] volumes = getVolume();
             // int compareValue = volumes[0].compareTo(volumes[1]);
             // BigDecimal sum = compareValue > 0 ? volumes[0] : volumes[1];
@@ -69,15 +71,23 @@ public class InSpreadRunnable implements Runnable {
             //
             // if (sum.compareTo(uplimitIn24h)< 0 && lastMinSum.compareTo(lastMinUplimit) < 0) {
             // 最后一分种交易量小于预设值上限
-            long quantity = getNumBetween(1090000, 2180000);
+            long quantity = getNumBetween(1090000, 3970000);
 
             String qtyStr = fmtDec(quantity, instrument.getSizeFractionDigits(), ordSizePrecision);
             String priceStr = fmtDec(price, instrument.getPriceFractionDigits(), ordPricePrecision);
             NewOrder sell = NewOrder.limitSell(instrument.asString(), TimeInForce.GTC, qtyStr, priceStr);
             NewOrder buy = NewOrder.limitBuy(instrument.asString(), TimeInForce.GTC, qtyStr, priceStr);
             // System.out.println(sell+"\n####\n"+buy);
-            NewOrderResponse sellResp = client.newOrder(sell);
-            NewOrderResponse buyResp = client.newOrder(buy);
+            NewOrderResponse sellResp, buyResp;
+            if (System.currentTimeMillis() % 3 < 2) {
+                sellResp = client.newOrder(sell);
+                buyResp = client.newOrder(buy);
+            }
+            else {
+                buyResp = client.newOrder(buy);
+                sellResp = client.newOrder(sell);
+            }
+            
             // System.out.println(sellResp + "\n######\n"+buyResp);
             Set<Long> orderIds = new HashSet<>();
             orderIds.add(sellResp.getOrderId());

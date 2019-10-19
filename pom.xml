@@ -37,7 +37,7 @@
 			<version>0.7.1-SNAPSHOT</version>
 		</dependency> -->
 		<!-- // trade dependency -->
-		<dependency>
+		<!-- <dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.7</version>
@@ -51,6 +51,12 @@
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
 			<version>1.10</version>
+		</dependency>
+		-->
+		<dependency>
+			<groupId>io.broker.api</groupId>
+			<artifactId>broker-api-client</artifactId>
+			<version>3.0.0</version>
 		</dependency>
 		<!-- trade dependency // -->
 
