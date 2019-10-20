@@ -29,12 +29,6 @@ public interface C {
     
     static final long EPOCH_MILLIS = LocalDate.now().atStartOfDay(ZoneId.systemDefault())
             .toInstant().toEpochMilli();
-    
-    static final String TAC_API_BASE = "https://api.tac.vip";
-    
-    static final String ACCESS_KEY = "FD1fzz5kkhWQ4QeRSj13MPVEG1nHEBgE9B6zWd1Z6t6dC0wPrA30Qr0tEDGyldR0";
-    
-    static final String SECRET_KEY = "AJ3DZhn1AQ5d2byKkGXVSFKhFkGOxHrBQDHkhQQppk82CryVWqBFXuowAJpfvywa";
 
 
 }
