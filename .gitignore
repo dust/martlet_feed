@@ -10,6 +10,9 @@
 # idea
 .idea/
 
+# sensitive data
+src/main/resources/application.properties
+
 # maven
 target/
 
