@@ -121,7 +121,7 @@ public class Main {
         public void run() {
             wsDaemon.keepAlive();
             while (true) {
-                long sleepMillis = InSpreadRunnable.getNumBetween(24000, 37000);
+                long sleepMillis = InSpreadRunnable.getNumBetween(21000, 41000);
                 try {
                     Thread.sleep(sleepMillis);
 

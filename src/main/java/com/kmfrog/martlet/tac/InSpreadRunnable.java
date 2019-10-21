@@ -71,7 +71,7 @@ public class InSpreadRunnable implements Runnable {
             //
             // if (sum.compareTo(uplimitIn24h)< 0 && lastMinSum.compareTo(lastMinUplimit) < 0) {
             // 最后一分种交易量小于预设值上限
-            long quantity = getNumBetween(810000, 3330000);
+            long quantity = getNumBetween(410000, 1570000);
 
             String qtyStr = fmtDec(quantity, instrument.getSizeFractionDigits(), ordSizePrecision);
             String priceStr = fmtDec(price, instrument.getPriceFractionDigits(), ordPricePrecision);
