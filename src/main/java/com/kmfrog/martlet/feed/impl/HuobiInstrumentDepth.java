@@ -1,11 +1,10 @@
 package com.kmfrog.martlet.feed.impl;
 
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.kmfrog.martlet.book.AggregateOrderBook;
+import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.feed.BaseInstrumentDepth;
@@ -14,15 +13,12 @@ import com.kmfrog.martlet.feed.Source;
 
 public class HuobiInstrumentDepth extends BaseInstrumentDepth {
 
-    private final AtomicLong lastUpdateId;
     // private final int MAX_DEPTH = 100;
     private ReentrantLock lock = new ReentrantLock();
 
-    public HuobiInstrumentDepth(Instrument instrument, AggregateOrderBook book, Source source,
+    public HuobiInstrumentDepth(Instrument instrument, IOrderBook book, Source source,
             ResetController controller) {
         super(instrument, book, source, controller);
-        lastUpdateId = new AtomicLong(0L);
-
     }
 
     @Override
@@ -35,11 +31,11 @@ public class HuobiInstrumentDepth extends BaseInstrumentDepth {
         lock.lock();
         try {
             long ts = json.getLongValue("ts");
-            if (ts < lastUpdateId.get()) {
+            if (ts < lastTimestamp.get()) {
                 return;
             }
 
-            lastUpdateId.set(ts);
+            lastTimestamp.set(ts);
             JSONArray bids = json.getJSONArray("bids");
             JSONArray asks = json.getJSONArray("asks");
 
@@ -48,6 +44,7 @@ public class HuobiInstrumentDepth extends BaseInstrumentDepth {
 
             updatePriceLevel(Side.BUY, bids);
             updatePriceLevel(Side.SELL, asks);
+            book.setLastUpdateTs(ts);
         } finally {
             lock.unlock();
         }

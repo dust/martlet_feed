@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.kmfrog.martlet.book.AggregateOrderBook;
+import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.feed.BaseInstrumentDepth;
@@ -16,15 +16,13 @@ import com.kmfrog.martlet.feed.Source;
 public class BhexInstrumentDepth extends BaseInstrumentDepth {
     
     private final AtomicLong lastUpdateId;
-    private final AtomicLong lastUpdateTime;
     private final Lock lock;
 
-    public BhexInstrumentDepth(Instrument instrument, AggregateOrderBook book, Source source,
+    public BhexInstrumentDepth(Instrument instrument, IOrderBook book, Source source,
             ResetController controller) {
         super(instrument, book, source, controller);
         
         lastUpdateId = new AtomicLong(0L);
-        lastUpdateTime = new AtomicLong(0L);
         lock = new ReentrantLock();
         
     }
@@ -59,7 +57,8 @@ public class BhexInstrumentDepth extends BaseInstrumentDepth {
                     updatePriceLevel(Side.SELL, asks);
                     // logger.info("onMessage. {}|{}|{}, {}", lastUpdateId.get(), evtFirstId, evtLastId, lastId);
                     lastUpdateId.set(id);
-                    lastUpdateTime.set(t);
+                    lastTimestamp.set(t);
+                    book.setLastUpdateTs(t);
                 }
             }
             finally {

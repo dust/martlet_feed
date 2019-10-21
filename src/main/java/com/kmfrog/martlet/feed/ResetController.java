@@ -19,5 +19,8 @@ public interface ResetController {
      * @param reconnect
      */
     void reset(Source mkt, Instrument instrument, BaseInstrumentDepth depth, boolean resubscribe, boolean reconnect);
+    
+    
+//    void 
 
 }

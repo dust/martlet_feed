@@ -1,31 +1,28 @@
 package com.kmfrog.martlet.feed.impl;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.kmfrog.martlet.book.AggregateOrderBook;
+import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.feed.BaseInstrumentDepth;
 import com.kmfrog.martlet.feed.ResetController;
 import com.kmfrog.martlet.feed.Source;
 
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantLock;
-
 /**
  * @Author dust
  */
 public class OkexInstrumentDepth extends BaseInstrumentDepth {
 
-    private final AtomicLong lastTimestamp;
     // private final int MAX_DEPTH = 100;
     // private final AtomicLong lastChecksum;
     private ReentrantLock lock = new ReentrantLock();
 
-    public OkexInstrumentDepth(Instrument instrument, AggregateOrderBook book, Source source,
+    public OkexInstrumentDepth(Instrument instrument, IOrderBook book, Source source,
             ResetController controller) {
         super(instrument, book, source, controller);
-        lastTimestamp = new AtomicLong(0L);
     }
 
     @Override
@@ -52,6 +49,7 @@ public class OkexInstrumentDepth extends BaseInstrumentDepth {
             updatePriceLevel(Side.SELL, asks);
             // lastChecksum.set(checksum);
             lastTimestamp.set(ts);
+            book.setLastUpdateTs(ts);
 
         } finally {
             lock.unlock();

@@ -1,5 +1,7 @@
 package com.kmfrog.martlet.book;
 
+import java.io.PrintStream;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -14,6 +16,8 @@ import it.unimi.dsi.fastutil.longs.LongSortedSet;
 public class OrderBook implements IOrderBook {
 
     private final long instrument;
+    private final AtomicLong lastUpdate;
+    private final AtomicLong lastReceived;
 
     private final Long2LongRBTreeMap bids;
     private final Long2LongRBTreeMap asks;
@@ -21,8 +25,10 @@ public class OrderBook implements IOrderBook {
     private final ReadWriteLock bidLock;
     private final ReadWriteLock askLock;
 
-    OrderBook(long instrument) {
+    public OrderBook(long instrument) {
         this.instrument = instrument;
+        lastReceived = new AtomicLong(0L);
+        lastUpdate = new AtomicLong(0L);
 
         bids = new Long2LongRBTreeMap(LongComparators.OPPOSITE_COMPARATOR);
         asks = new Long2LongRBTreeMap(LongComparators.NATURAL_COMPARATOR);
@@ -134,6 +140,22 @@ public class OrderBook implements IOrderBook {
         }
     }
 
+    @Override
+    public long getLastUpdateTs() {
+        return lastUpdate.get();
+    }
+
+    @Override
+    public long getLastReceivedTs() {
+        return lastReceived.get();
+    }
+
+    @Override
+    public void setLastUpdateTs(long ts) {
+        lastReceived.set(System.currentTimeMillis());
+        lastUpdate.set(ts);
+    }
+
     public boolean replace(Side side, long price, long quantity, int source) {
         // bids or asks
         Long2LongRBTreeMap levels = getLevels(side);
@@ -146,7 +168,7 @@ public class OrderBook implements IOrderBook {
             } else {
                 levels.remove(price);
             }
-            return price == levels.firstLongKey();
+            return (levels.size() > 0 && price == levels.firstLongKey()) || (levels.size() == 0 && quantity == 0);
         } finally {
             lock.unlock();
         }
@@ -164,10 +186,11 @@ public class OrderBook implements IOrderBook {
 
             boolean onBestLevel = price == levels.firstLongKey();
 
-            if (newSize > 0)
+            if (newSize > 0) {
                 levels.put(price, newSize);
-            else
+            } else {
                 levels.remove(price);
+            }
 
             return onBestLevel;
         } finally {
@@ -178,11 +201,25 @@ public class OrderBook implements IOrderBook {
     public boolean clear(Side side, int source) {
         Long2LongRBTreeMap levels = getLevels(side);
         Lock lock = side == Side.BUY ? bidLock.writeLock() : askLock.writeLock();
-        
+
         lock.lock();
         try {
             levels.clear();
             return true;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void dump(Side side, PrintStream writer) {
+        Lock lock = side == Side.BUY ? bidLock.readLock() : askLock.readLock();
+
+        lock.lock();
+        try {
+            Long2LongRBTreeMap levels = getLevels(side);
+            levels.forEach((k, v) -> {
+                writer.printf("%d: %d, ", k, v);
+            });
         } finally {
             lock.unlock();
         }
