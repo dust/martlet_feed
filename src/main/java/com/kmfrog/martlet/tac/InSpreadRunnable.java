@@ -58,6 +58,8 @@ public class InSpreadRunnable implements Runnable {
         long price1 = ask1 - getNumBetween(1, ask1 - bid1);
         long price2 = bid1 + getNumBetween(2, ask1 - bid1);
         long price = Math.max(price1, price2);
+        
+//        if(ask1 - bid1 == )
 
         if ( price < ask1) {
             // BigDecimal[] volumes = getVolume();
@@ -114,7 +116,7 @@ public class InSpreadRunnable implements Runnable {
 
     }
 
-    private BigDecimal[] getVolume() {
+    public BigDecimal[] getVolume() {
         MyTradeRequest req = new MyTradeRequest();
         long currentTimeMillis = System.currentTimeMillis();
         req.setStartTime(currentTimeMillis - 86400000L);
