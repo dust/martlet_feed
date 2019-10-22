@@ -61,7 +61,7 @@ public class InSpreadRunnable implements Runnable {
         
 //        if(ask1 - bid1 == )
 
-        if ( price < ask1) {
+        if ( price < ask1 && price > bid1) {
             // BigDecimal[] volumes = getVolume();
             // int compareValue = volumes[0].compareTo(volumes[1]);
             // BigDecimal sum = compareValue > 0 ? volumes[0] : volumes[1];
@@ -73,13 +73,13 @@ public class InSpreadRunnable implements Runnable {
             //
             // if (sum.compareTo(uplimitIn24h)< 0 && lastMinSum.compareTo(lastMinUplimit) < 0) {
             // 最后一分种交易量小于预设值上限
-            long quantity = getNumBetween(410000, 1570000);
+            long quantity = getNumBetween(5000, 59000);
 
             String qtyStr = fmtDec(quantity, instrument.getSizeFractionDigits(), ordSizePrecision);
             String priceStr = fmtDec(price, instrument.getPriceFractionDigits(), ordPricePrecision);
             NewOrder sell = NewOrder.limitSell(instrument.asString(), TimeInForce.GTC, qtyStr, priceStr);
             NewOrder buy = NewOrder.limitBuy(instrument.asString(), TimeInForce.GTC, qtyStr, priceStr);
-            // System.out.println(sell+"\n####\n"+buy);
+//             System.out.println(sell+"\n####\n"+buy);
             NewOrderResponse sellResp, buyResp;
             if (System.currentTimeMillis() % 3 < 2) {
                 sellResp = client.newOrder(sell);
@@ -89,15 +89,15 @@ public class InSpreadRunnable implements Runnable {
                 buyResp = client.newOrder(buy);
                 sellResp = client.newOrder(sell);
             }
-            
-            // System.out.println(sellResp + "\n######\n"+buyResp);
+//            
+//            // System.out.println(sellResp + "\n######\n"+buyResp);
             Set<Long> orderIds = new HashSet<>();
             orderIds.add(sellResp.getOrderId());
             orderIds.add(buyResp.getOrderId());
             
 
             try {
-                Thread.sleep(3000L);
+                Thread.sleep(1000L);
             } catch (InterruptedException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

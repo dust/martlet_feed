@@ -50,57 +50,57 @@ public class Main {
          String apiKey = cfg.getString("api.key");
          String secretKey = cfg.getString("api.secret");
 
-         Main app = new Main();
-         
-         Instrument xie = new Instrument("XIEPTCN", 3, 3);
-        
-         BrokerApiClientFactory factory = BrokerApiClientFactory.newInstance(baseUrl, apiKey,
-        		 secretKey);
-         BrokerApiRestClient client = factory.newRestClient();
-         OrderBook xieBook = new OrderBook(xie.asLong());
-        
-         // NewOrderResponse resp = client.newOrder(NewOrder.limitBuy("XIEPTCN", TimeInForce.GTC, "10", "0.035"));
-         // System.out.println(resp);
-        
-         BrokerInfo info = client.getBrokerInfo();
-         try {
-         Thread.sleep(10000L);
-         } catch (InterruptedException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-         }
-         InSpreadRunnable r = new InSpreadRunnable(xie, xieBook, client, 3, 0);
-//         r.run();
-         BigDecimal[] vols = r.getVolume();
-         System.out.println(Arrays.asList(vols));
-        
-         List<Order> openOrders = client.getOpenOrders(new OpenOrderRequest("XIEPTCN", 100));
-         BigDecimal xieSum = new BigDecimal("0");
-         BigDecimal ptcnSum = new BigDecimal("0");
-         for(Order o : openOrders) {
-        	 if(o.getSide() == OrderSide.SELL) {
-        	 xieSum = xieSum.add(new BigDecimal(o.getOrigQty()));
-        	 ptcnSum = ptcnSum.add(new BigDecimal(o.getCummulativeQuoteQty()));
-        	 }
-         }
-//         System.out.println(openOrders);
-         System.out.format("%s|%s\n", xieSum, ptcnSum);
-        
-         Account acct = client.getAccount(BrokerConstants.DEFAULT_RECEIVING_WINDOW, System.currentTimeMillis());
-         System.out.println(acct);
-         System.out.println(acct.getBalances());
-         System.out.println(acct.getAssetBalance("PTCN"));
-        
-         List<Trade> trades = client.getMyTrades(new MyTradeRequest());
-         System.out.println(trades);
-        
-         // MathContext mc = new MathContext(4, RoundingMode.FLOOR);
-         // BigDecimal x = BigDecimal.valueOf(1000000000000L).divide(BigDecimal.valueOf(140000), mc );
-         // Instrument i = new Instrument("X", 8, 8);
-         // System.out.println(i.getPriceDecimal(10000000, 4));
-         // System.out.println(i.getPriceStr(10000000, 4));
-         System.out.println(new DecimalFormat("0.0").format(new BigDecimal("10000")));
-         System.out.println(fmtDecimal(86931, 3));
+//         Main app = new Main();
+//         
+//         Instrument xie = new Instrument("XIEPTCN", 3, 3);
+//        
+//         BrokerApiClientFactory factory = BrokerApiClientFactory.newInstance(baseUrl, apiKey,
+//        		 secretKey);
+//         BrokerApiRestClient client = factory.newRestClient();
+//         OrderBook xieBook = new OrderBook(xie.asLong());
+//        
+//         // NewOrderResponse resp = client.newOrder(NewOrder.limitBuy("XIEPTCN", TimeInForce.GTC, "10", "0.035"));
+//         // System.out.println(resp);
+//        
+//         BrokerInfo info = client.getBrokerInfo();
+//         try {
+//         Thread.sleep(10000L);
+//         } catch (InterruptedException e) {
+//         // TODO Auto-generated catch block
+//         e.printStackTrace();
+//         }
+//         InSpreadRunnable r = new InSpreadRunnable(xie, xieBook, client, 3, 0);
+////         r.run();
+//         BigDecimal[] vols = r.getVolume();
+//         System.out.println(Arrays.asList(vols));
+//        
+//         List<Order> openOrders = client.getOpenOrders(new OpenOrderRequest("XIEPTCN", 100));
+//         BigDecimal xieSum = new BigDecimal("0");
+//         BigDecimal ptcnSum = new BigDecimal("0");
+//         for(Order o : openOrders) {
+//        	 if(o.getSide() == OrderSide.SELL) {
+//        	 xieSum = xieSum.add(new BigDecimal(o.getOrigQty()));
+//        	 ptcnSum = ptcnSum.add(new BigDecimal(o.getCummulativeQuoteQty()));
+//        	 }
+//         }
+////         System.out.println(openOrders);
+//         System.out.format("%s|%s\n", xieSum, ptcnSum);
+//        
+//         Account acct = client.getAccount(BrokerConstants.DEFAULT_RECEIVING_WINDOW, System.currentTimeMillis());
+//         System.out.println(acct);
+//         System.out.println(acct.getBalances());
+//         System.out.println(acct.getAssetBalance("PTCN"));
+//        
+//         List<Trade> trades = client.getMyTrades(new MyTradeRequest());
+//         System.out.println(trades);
+//        
+//         // MathContext mc = new MathContext(4, RoundingMode.FLOOR);
+//         // BigDecimal x = BigDecimal.valueOf(1000000000000L).divide(BigDecimal.valueOf(140000), mc );
+//         // Instrument i = new Instrument("X", 8, 8);
+//         // System.out.println(i.getPriceDecimal(10000000, 4));
+//         // System.out.println(i.getPriceStr(10000000, 4));
+//         System.out.println(new DecimalFormat("0.0").format(new BigDecimal("10000")));
+//         System.out.println(fmtDecimal(86931, 3));
 
         // Random rnd = new Random(System.currentTimeMillis());
         // for(int i=0; i<100; i++) {
@@ -108,20 +108,20 @@ public class Main {
         // }
 
        
-//        Thread worker = new Main.XiePtcnThread(baseUrl, apiKey, secretKey);
-//        worker.start();
-//        try {
-//            worker.join();
-//        } catch (InterruptedException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        }
+        Thread worker = new Main.XiePtcnThread(baseUrl, apiKey, secretKey);
+        worker.start();
+        try {
+            worker.join();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
     }
 
     static class XiePtcnThread extends Thread implements ResetController {
 
-        static final Instrument XIE = new Instrument("XIEPTCN", 4, 4);
+        static final Instrument XIE = new Instrument("XIEPTCN", 3, 3);
         final BrokerApiRestClient client;
         final BhexInstrumentDepth xieDepth;
         final IOrderBook book;
@@ -147,7 +147,7 @@ public class Main {
         public void run() {
             wsDaemon.keepAlive();
             while (true) {
-                long sleepMillis = InSpreadRunnable.getNumBetween(21000, 41000);
+                long sleepMillis = InSpreadRunnable.getNumBetween(2000, 17000);
                 try {
                     Thread.sleep(sleepMillis);
 
