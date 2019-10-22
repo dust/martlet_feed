@@ -1,16 +1,12 @@
 package com.kmfrog.martlet.feed.impl;
 
-import java.math.BigDecimal;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.DefaultJSONParser;
-import com.kmfrog.martlet.book.AggregateOrderBook;
+import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.feed.BaseInstrumentDepth;
@@ -26,16 +22,14 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
     
     private final AtomicLong lastUpdateId;
     private final AtomicLong lastSnapshotId;
-    private final AtomicLong lastUpdateTime;
 //    private final int MAX_DEPTH = 100;
     private ReentrantLock lock = new ReentrantLock();
 
-    public BinanceInstrumentDepth(Instrument instrument, AggregateOrderBook book, Source source,
+    public BinanceInstrumentDepth(Instrument instrument, IOrderBook book, Source source,
             ResetController controller) {
         super(instrument, book, source, controller);
         lastUpdateId = new AtomicLong(0);
         lastSnapshotId = new AtomicLong(0);
-        lastUpdateTime = new AtomicLong(0);
     }
 
     @Override
@@ -57,7 +51,7 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
 
         lock.lock();
         try {
-            lastUpdateTime.set(root.getLongValue("E"));
+            lastTimestamp.set(root.getLongValue("E"));
             JSONArray bids = root.getJSONArray("b");
             JSONArray asks = root.getJSONArray("a");
 
@@ -80,6 +74,7 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
             updatePriceLevel(Side.SELL, asks);
             // logger.info("onMessage. {}|{}|{}, {}", lastUpdateId.get(), evtFirstId, evtLastId, lastId);
             lastUpdateId.set(evtLastId);
+            book.setLastUpdateTs(lastTimestamp.get());
         } finally {
             lock.unlock();
         }

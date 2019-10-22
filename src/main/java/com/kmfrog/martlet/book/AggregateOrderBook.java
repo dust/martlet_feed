@@ -1,9 +1,12 @@
 package com.kmfrog.martlet.book;
 
 import java.io.PrintStream;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import com.kmfrog.martlet.feed.Source;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.longs.LongComparators;
@@ -22,9 +25,13 @@ public class AggregateOrderBook implements IOrderBook {
     private final Long2ObjectRBTreeMap<MultiSrc> asks;
     private final ReadWriteLock bidLock;
     private final ReadWriteLock askLock;
+    private final AtomicLong lastUpdate;
+    private final AtomicLong lastReceived;
 
     public AggregateOrderBook(long instrument) {
         this.instrument = instrument;
+        lastUpdate = new AtomicLong(0L);
+        lastReceived = new AtomicLong(0L);
 
         this.bids = new Long2ObjectRBTreeMap<MultiSrc>(LongComparators.OPPOSITE_COMPARATOR);
         this.asks = new Long2ObjectRBTreeMap<MultiSrc>(LongComparators.NATURAL_COMPARATOR);
@@ -175,6 +182,25 @@ public class AggregateOrderBook implements IOrderBook {
             askLock.readLock().unlock();
         }
     }
+    
+    @Override
+    public long getLastUpdateTs() {
+        return lastUpdate.get();
+    }
+
+    @Override
+    public long getLastReceivedTs() {
+        return lastReceived.get();
+    }
+
+    @Override
+    public void setLastUpdateTs(long ts) {
+        //对于聚合订单簿，每次更新接收时间，但是平台最后更新时间，只能是更新的时间才被更新。即只单向（大）修改，不会回撤。避免时间混乱。
+        lastReceived.set(System.currentTimeMillis());
+        if(lastUpdate.get() < ts) {
+            setLastUpdateTs(ts);
+        }
+    }
 
     public boolean replace(Side side, long price, long quantity, int source) {
         // bids or asks
@@ -257,6 +283,46 @@ public class AggregateOrderBook implements IOrderBook {
 
             return levels.size() == 0 || oldPrice != levels.firstLongKey();
         } finally {
+            lock.unlock();
+        }
+    }
+    
+    /**
+     * 聚合其它order book.
+     * @param src
+     * @param book
+     */
+    public void aggregate(Source src, IOrderBook book) {
+        aggregate(Side.BUY, src.ordinal(), book);
+        aggregate(Side.SELL, src.ordinal(), book);
+    }
+    
+    private void aggregate(Side side, int source, IOrderBook book) {
+        Lock lock = side == Side.BUY ? bidLock.writeLock() : askLock.writeLock();
+        LongSortedSet prices = side == Side.BUY ? book.getBidPrices() : book.getAskPrices();
+
+        lock.lock();
+        try {
+            Long2ObjectRBTreeMap<MultiSrc> levels = getLevels(side);
+            prices.stream().forEach(price -> {
+                long quantity = side == Side.BUY ? book.getBidSize(price.longValue()): book.getAskSize(price.longValue());
+                if (!levels.containsKey(price.longValue())) {
+                    // 如果order book中不存在数量为零的此价位，那么也没有意义进行添加。
+                    if (quantity > 0L) {
+                        MultiSrc multiSrc = new MultiSrc(price);
+                        multiSrc.addTo(quantity, source);
+                        levels.put(price.longValue(), multiSrc);
+                    }
+                } else {
+                    long newSize = levels.get(price.longValue()).addTo(quantity, source);
+                    if (newSize <= 0) {
+                        levels.remove(price.longValue());
+                    }
+                }
+                
+            });
+        }
+        finally {
             lock.unlock();
         }
     }

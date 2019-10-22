@@ -1,6 +1,6 @@
 package com.kmfrog.martlet.book;
 
-import com.kmfrog.martlet.feed.Source;
+import java.io.PrintStream;
 
 import it.unimi.dsi.fastutil.longs.LongSortedSet;
 
@@ -20,6 +20,9 @@ public interface IOrderBook {
     LongSortedSet getAskPrices();
     long getAskSize(long price);
     
+    long getLastUpdateTs();
+    long getLastReceivedTs();
+    void setLastUpdateTs(long ts);
     
     /**
      * 将参数中的变化量累计到订单档位，不存在此档位时会新增。
@@ -48,4 +51,11 @@ public interface IOrderBook {
      * @return
      */
     boolean clear(Side side, int source);
+    
+    /**
+     * 输出某一侧的订单列表。
+     * @param side
+     * @param ps
+     */
+    void dump(Side side, PrintStream ps);
 }

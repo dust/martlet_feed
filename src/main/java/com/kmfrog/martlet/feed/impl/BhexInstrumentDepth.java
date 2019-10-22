@@ -16,7 +16,6 @@ import com.kmfrog.martlet.feed.Source;
 public class BhexInstrumentDepth extends BaseInstrumentDepth {
     
     private final AtomicLong lastUpdateId;
-    private final AtomicLong lastUpdateTime;
     private final Lock lock;
 
     public BhexInstrumentDepth(Instrument instrument, IOrderBook book, Source source,
@@ -24,7 +23,6 @@ public class BhexInstrumentDepth extends BaseInstrumentDepth {
         super(instrument, book, source, controller);
         
         lastUpdateId = new AtomicLong(0L);
-        lastUpdateTime = new AtomicLong(0L);
         lock = new ReentrantLock();
         
     }
@@ -59,7 +57,8 @@ public class BhexInstrumentDepth extends BaseInstrumentDepth {
                     updatePriceLevel(Side.SELL, asks);
                     // logger.info("onMessage. {}|{}|{}, {}", lastUpdateId.get(), evtFirstId, evtLastId, lastId);
                     lastUpdateId.set(id);
-                    lastUpdateTime.set(t);
+                    lastTimestamp.set(t);
+                    book.setLastUpdateTs(t);
                 }
             }
             finally {
