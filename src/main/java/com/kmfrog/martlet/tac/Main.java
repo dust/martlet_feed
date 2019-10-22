@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -24,6 +26,14 @@ import com.typesafe.config.ConfigFactory;
 
 import io.broker.api.client.BrokerApiClientFactory;
 import io.broker.api.client.BrokerApiRestClient;
+import io.broker.api.client.constant.BrokerConstants;
+import io.broker.api.client.domain.account.Account;
+import io.broker.api.client.domain.account.Order;
+import io.broker.api.client.domain.account.OrderSide;
+import io.broker.api.client.domain.account.Trade;
+import io.broker.api.client.domain.account.request.MyTradeRequest;
+import io.broker.api.client.domain.account.request.OpenOrderRequest;
+import io.broker.api.client.domain.general.BrokerInfo;
 
 public class Main {
 
@@ -34,62 +44,78 @@ public class Main {
     }
 
     public static void main(String[] args) {
+    	
+    	 Config cfg = ConfigFactory.load();
+         String baseUrl = cfg.getString("api.base.url");
+         String apiKey = cfg.getString("api.key");
+         String secretKey = cfg.getString("api.secret");
 
-        // Main app = new Main();
-        //
-        // BrokerApiClientFactory factory = BrokerApiClientFactory.newInstance(C.TAC_API_BASE, C.ACCESS_KEY,
-        // C.SECRET_KEY);
-        // BrokerApiRestClient client = factory.newRestClient();
-        //
-        // // NewOrderResponse resp = client.newOrder(NewOrder.limitBuy("XIEPTCN", TimeInForce.GTC, "10", "0.035"));
-        // // System.out.println(resp);
-        //
-        // BrokerInfo info = client.getBrokerInfo();
-        // try {
-        // Thread.sleep(10000L);
-        // } catch (InterruptedException e) {
-        // // TODO Auto-generated catch block
-        // e.printStackTrace();
-        // }
-        // InSpreadRunnable r = new InSpreadRunnable(xie, xieBook, client, 3, 0);
-        // r.run();
-        //
-        // List<Order> openOrders = client.getOpenOrders(new OpenOrderRequest("XIEPTCN", 100));
-        // System.out.println(openOrders);
-        //
-        // Account acct = client.getAccount(BrokerConstants.DEFAULT_RECEIVING_WINDOW, System.currentTimeMillis());
-        // System.out.println(acct);
-        // System.out.println(acct.getBalances());
-        // System.out.println(acct.getAssetBalance("PTCN"));
-        //
-        // List<Trade> trades = client.getMyTrades(new MyTradeRequest());
-        // System.out.println(trades);
-        //
-        // // MathContext mc = new MathContext(4, RoundingMode.FLOOR);
-        // // BigDecimal x = BigDecimal.valueOf(1000000000000L).divide(BigDecimal.valueOf(140000), mc );
-        // // Instrument i = new Instrument("X", 8, 8);
-        // // System.out.println(i.getPriceDecimal(10000000, 4));
-        // // System.out.println(i.getPriceStr(10000000, 4));
-        // System.out.println(new DecimalFormat("0.0").format(new BigDecimal("10000")));
-        // System.out.println(fmtDecimal(86931, 3));
+         Main app = new Main();
+         
+         Instrument xie = new Instrument("XIEPTCN", 3, 3);
+        
+         BrokerApiClientFactory factory = BrokerApiClientFactory.newInstance(baseUrl, apiKey,
+        		 secretKey);
+         BrokerApiRestClient client = factory.newRestClient();
+         OrderBook xieBook = new OrderBook(xie.asLong());
+        
+         // NewOrderResponse resp = client.newOrder(NewOrder.limitBuy("XIEPTCN", TimeInForce.GTC, "10", "0.035"));
+         // System.out.println(resp);
+        
+         BrokerInfo info = client.getBrokerInfo();
+         try {
+         Thread.sleep(10000L);
+         } catch (InterruptedException e) {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+         }
+         InSpreadRunnable r = new InSpreadRunnable(xie, xieBook, client, 3, 0);
+//         r.run();
+         BigDecimal[] vols = r.getVolume();
+         System.out.println(Arrays.asList(vols));
+        
+         List<Order> openOrders = client.getOpenOrders(new OpenOrderRequest("XIEPTCN", 100));
+         BigDecimal xieSum = new BigDecimal("0");
+         BigDecimal ptcnSum = new BigDecimal("0");
+         for(Order o : openOrders) {
+        	 if(o.getSide() == OrderSide.SELL) {
+        	 xieSum = xieSum.add(new BigDecimal(o.getOrigQty()));
+        	 ptcnSum = ptcnSum.add(new BigDecimal(o.getCummulativeQuoteQty()));
+        	 }
+         }
+//         System.out.println(openOrders);
+         System.out.format("%s|%s\n", xieSum, ptcnSum);
+        
+         Account acct = client.getAccount(BrokerConstants.DEFAULT_RECEIVING_WINDOW, System.currentTimeMillis());
+         System.out.println(acct);
+         System.out.println(acct.getBalances());
+         System.out.println(acct.getAssetBalance("PTCN"));
+        
+         List<Trade> trades = client.getMyTrades(new MyTradeRequest());
+         System.out.println(trades);
+        
+         // MathContext mc = new MathContext(4, RoundingMode.FLOOR);
+         // BigDecimal x = BigDecimal.valueOf(1000000000000L).divide(BigDecimal.valueOf(140000), mc );
+         // Instrument i = new Instrument("X", 8, 8);
+         // System.out.println(i.getPriceDecimal(10000000, 4));
+         // System.out.println(i.getPriceStr(10000000, 4));
+         System.out.println(new DecimalFormat("0.0").format(new BigDecimal("10000")));
+         System.out.println(fmtDecimal(86931, 3));
 
         // Random rnd = new Random(System.currentTimeMillis());
         // for(int i=0; i<100; i++) {
         // System.out.println((long)(21 + rnd.nextDouble() * (34 - 21)));
         // }
 
-        Config cfg = ConfigFactory.load();
-        String baseUrl = cfg.getString("api.base.url");
-        String apiKey = cfg.getString("api.key");
-        String secretKey = cfg.getString("api.secret");
-        Thread worker = new Main.XiePtcnThread(baseUrl, apiKey, secretKey);
-        worker.start();
-        try {
-            worker.join();
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+       
+//        Thread worker = new Main.XiePtcnThread(baseUrl, apiKey, secretKey);
+//        worker.start();
+//        try {
+//            worker.join();
+//        } catch (InterruptedException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
 
     }
 
@@ -121,7 +147,7 @@ public class Main {
         public void run() {
             wsDaemon.keepAlive();
             while (true) {
-                long sleepMillis = InSpreadRunnable.getNumBetween(24000, 37000);
+                long sleepMillis = InSpreadRunnable.getNumBetween(21000, 41000);
                 try {
                     Thread.sleep(sleepMillis);
 

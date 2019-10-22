@@ -58,6 +58,8 @@ public class InSpreadRunnable implements Runnable {
         long price1 = ask1 - getNumBetween(1, ask1 - bid1);
         long price2 = bid1 + getNumBetween(2, ask1 - bid1);
         long price = Math.max(price1, price2);
+        
+//        if(ask1 - bid1 == )
 
         if ( price < ask1) {
             // BigDecimal[] volumes = getVolume();
@@ -71,7 +73,7 @@ public class InSpreadRunnable implements Runnable {
             //
             // if (sum.compareTo(uplimitIn24h)< 0 && lastMinSum.compareTo(lastMinUplimit) < 0) {
             // 最后一分种交易量小于预设值上限
-            long quantity = getNumBetween(1090000, 3970000);
+            long quantity = getNumBetween(410000, 1570000);
 
             String qtyStr = fmtDec(quantity, instrument.getSizeFractionDigits(), ordSizePrecision);
             String priceStr = fmtDec(price, instrument.getPriceFractionDigits(), ordPricePrecision);
@@ -114,7 +116,7 @@ public class InSpreadRunnable implements Runnable {
 
     }
 
-    private BigDecimal[] getVolume() {
+    public BigDecimal[] getVolume() {
         MyTradeRequest req = new MyTradeRequest();
         long currentTimeMillis = System.currentTimeMillis();
         req.setStartTime(currentTimeMillis - 86400000L);
