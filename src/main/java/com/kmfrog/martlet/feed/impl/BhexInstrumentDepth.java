@@ -10,7 +10,7 @@ import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.feed.BaseInstrumentDepth;
-import com.kmfrog.martlet.feed.ResetController;
+import com.kmfrog.martlet.feed.Controller;
 import com.kmfrog.martlet.feed.Source;
 
 public class BhexInstrumentDepth extends BaseInstrumentDepth {
@@ -19,7 +19,7 @@ public class BhexInstrumentDepth extends BaseInstrumentDepth {
     private final Lock lock;
 
     public BhexInstrumentDepth(Instrument instrument, IOrderBook book, Source source,
-            ResetController controller) {
+            Controller controller) {
         super(instrument, book, source, controller);
         
         lastUpdateId = new AtomicLong(0L);

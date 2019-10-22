@@ -28,7 +28,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
  * Hello world!
  *
  */
-public class App implements ResetController {
+public class App implements Controller {
     private static final Logger logger = LoggerFactory.getLogger(App.class);
     
     /**
@@ -55,7 +55,7 @@ public class App implements ResetController {
         return srcBooks.computeIfAbsent(instrument, (key)-> new OrderBook(key));
     }
     
-    IOrderBook makesureAggregateOrderBook(long instrument) {
+    AggregateOrderBook makesureAggregateOrderBook(long instrument) {
         return books.computeIfAbsent(instrument, (key) -> new AggregateOrderBook(key));
     }
 
@@ -120,14 +120,14 @@ public class App implements ResetController {
 
         while (true) {
             Thread.sleep(10000L);
-            btcBook.dump(Side.BUY, System.out);
+//            btcBook.dump(Side.BUY, System.out);
             handler.dumpStats(System.out);
 //            long now = System.currentTimeMillis();
 //            System.out.format("\nBA: %d|%d\n", now - btcBook.getLastReceivedTs(), btcBook.getLastReceivedTs() - btcBook.getLastUpdateTs());
             System.out.println("\n#####\n");
 
             app.websocketDaemons.get(Source.Okex).keepAlive();
-            okexBtcUsdt.dump(Side.BUY, System.out);
+//            okexBtcUsdt.dump(Side.BUY, System.out);
             okexHandler.dumpStats(System.out);
 //            now = System.currentTimeMillis();
 //            System.out.format("\nOK: %d|%d\n", now - okexBtcUsdt.getLastReceivedTs(), okexBtcUsdt.getLastReceivedTs() - okexBtcUsdt.getLastUpdateTs());
@@ -136,14 +136,13 @@ public class App implements ResetController {
 //            xieBook.dump(Side.BUY, System.out);
 //            app.websocketDaemons.get(Source.Bhex).keepAlive();
             
-            hbBtcUsdt.dump(Side.BUY, System.out);
+//            hbBtcUsdt.dump(Side.BUY, System.out);
             hbHandler.dumpStats(System.out);
 //            now = System.currentTimeMillis();
 //            System.out.format("\nHB: %d|%d\n", now - hbBtcUsdt.getLastReceivedTs(), hbBtcUsdt.getLastReceivedTs() - hbBtcUsdt.getLastUpdateTs());
             System.out.println("\n====\n");
             
-            
-//            executor.su
+//            executor.submit(new AggregateRunnable(app.makesureAggregateOrderBook(bnbbtc.asLong()), new Source[] {Source.Binance, Source.Okex, Source.Huobi}, app));
         }
     }
 
@@ -151,5 +150,18 @@ public class App implements ResetController {
 //        this.startSnapshotTask(instrument.asString().toUpperCase(), depth);
         websocketDaemons.get(mkt).reset(instrument, depth, isSubscribe, isConnect);
     }
+
+    @Override
+    public void aggregate(Source mkt, Instrument instrument, OrderBook book) {
+        
+    }
+
+    @Override
+    public void clear(Source mkt, Instrument instrument, OrderBook book) {
+        
+        
+    }
+    
+    
 
 }

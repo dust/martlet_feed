@@ -8,7 +8,7 @@ import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.feed.BaseInstrumentDepth;
-import com.kmfrog.martlet.feed.ResetController;
+import com.kmfrog.martlet.feed.Controller;
 import com.kmfrog.martlet.feed.Source;
 
 public class HuobiInstrumentDepth extends BaseInstrumentDepth {
@@ -17,7 +17,7 @@ public class HuobiInstrumentDepth extends BaseInstrumentDepth {
     private ReentrantLock lock = new ReentrantLock();
 
     public HuobiInstrumentDepth(Instrument instrument, IOrderBook book, Source source,
-            ResetController controller) {
+            Controller controller) {
         super(instrument, book, source, controller);
     }
 

@@ -104,15 +104,14 @@ public abstract class BaseWebSocketHandler {
     }
 
     protected void onClose(int statusCode, String reason) {
+        if (logger.isInfoEnabled()) {
+            logger.info("连接关闭,[{}][{}],[{}]", statusCode, reason, session == null ? "" : session.getRemoteAddress());
+        }
         lock.lock();
         try {
             this.session = null;
         } finally {
             lock.unlock();
-        }
-
-        if (logger.isInfoEnabled()) {
-            logger.info("连接关闭,[{}],[{}]", reason, session.getRemoteAddress());
         }
     }
 
