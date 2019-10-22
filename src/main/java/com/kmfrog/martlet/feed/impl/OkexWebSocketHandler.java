@@ -109,7 +109,13 @@ public class OkexWebSocketHandler extends BaseWebSocketHandler {
     @Override
     protected void onBinaryMessage(Session session, InputStream is) throws IOException {
         String result = uncompress(is);
+//        onMessage(session, result);
+        if(DBG) {
+            onMessageWithStats(session, result);
+        }
+        else {
         onMessage(session, result);
+        }
     }
 
     @Override

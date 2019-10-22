@@ -121,22 +121,25 @@ public class App implements ResetController {
         while (true) {
             Thread.sleep(10000L);
             btcBook.dump(Side.BUY, System.out);
-            long now = System.currentTimeMillis();
-            System.out.format("\nBA: %d|%d\n", now - btcBook.getLastReceivedTs(), btcBook.getLastReceivedTs() - btcBook.getLastUpdateTs());
+            handler.dumpStats(System.out);
+//            long now = System.currentTimeMillis();
+//            System.out.format("\nBA: %d|%d\n", now - btcBook.getLastReceivedTs(), btcBook.getLastReceivedTs() - btcBook.getLastUpdateTs());
             System.out.println("\n#####\n");
 
             app.websocketDaemons.get(Source.Okex).keepAlive();
             okexBtcUsdt.dump(Side.BUY, System.out);
-            now = System.currentTimeMillis();
-            System.out.format("\nOK: %d|%d\n", now - okexBtcUsdt.getLastReceivedTs(), okexBtcUsdt.getLastReceivedTs() - okexBtcUsdt.getLastUpdateTs());
+            okexHandler.dumpStats(System.out);
+//            now = System.currentTimeMillis();
+//            System.out.format("\nOK: %d|%d\n", now - okexBtcUsdt.getLastReceivedTs(), okexBtcUsdt.getLastReceivedTs() - okexBtcUsdt.getLastUpdateTs());
             System.out.println("\n====\n");
             
 //            xieBook.dump(Side.BUY, System.out);
 //            app.websocketDaemons.get(Source.Bhex).keepAlive();
             
             hbBtcUsdt.dump(Side.BUY, System.out);
-            now = System.currentTimeMillis();
-            System.out.format("\nHB: %d|%d\n", now - hbBtcUsdt.getLastReceivedTs(), hbBtcUsdt.getLastReceivedTs() - hbBtcUsdt.getLastUpdateTs());
+            hbHandler.dumpStats(System.out);
+//            now = System.currentTimeMillis();
+//            System.out.format("\nHB: %d|%d\n", now - hbBtcUsdt.getLastReceivedTs(), hbBtcUsdt.getLastReceivedTs() - hbBtcUsdt.getLastUpdateTs());
             System.out.println("\n====\n");
             
             

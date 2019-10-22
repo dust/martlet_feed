@@ -20,11 +20,10 @@ import com.kmfrog.martlet.book.Instrument;
  *
  */
 @WebSocket(maxTextMessageSize = 64 * 1024)
-public class WebSocketDaemon{
+public class WebSocketDaemon {
 
     private final BaseWebSocketHandler handler;
     private Session session;
-
 
     public WebSocketDaemon(BaseWebSocketHandler handler) {
         this.handler = handler;
@@ -57,9 +56,13 @@ public class WebSocketDaemon{
 
     @OnWebSocketMessage
     public void onMessage(Session session, String msg) {
-        handler.onMessage(session, msg);
+        if (BaseWebSocketHandler.DBG) {
+            handler.onMessageWithStats(session, msg);
+        } else {
+            handler.onMessage(session, msg);
+        }
     }
-    
+
     @OnWebSocketMessage
     public void onBinaryMessage(Session session, InputStream is) throws IOException {
         handler.onBinaryMessage(session, is);
@@ -68,7 +71,7 @@ public class WebSocketDaemon{
     public void keepAlive() {
         session = handler.keepAlive();
     }
-    
+
     public void reset(Instrument instrument, BaseInstrumentDepth depth, boolean isSubscribe, boolean isConnect) {
         handler.reset(instrument, depth, isSubscribe, isConnect);
     }

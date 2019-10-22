@@ -1,18 +1,17 @@
 package com.kmfrog.martlet.feed;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.net.SocketTimeoutException;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.GZIPInputStream;
-import java.util.zip.Inflater;
 
+import org.apache.commons.compress.compressors.deflate64.Deflate64CompressorInputStream;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
@@ -21,8 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.kmfrog.martlet.book.Instrument;
-
-import org.apache.commons.compress.compressors.deflate64.Deflate64CompressorInputStream;
 
 /**
  * author: Dust
@@ -40,10 +37,13 @@ public abstract class BaseWebSocketHandler {
 
     private AtomicLong counter;
 
+    public static final boolean DBG = true;
+    protected final AtomicLong times = new AtomicLong(0L);
+    protected final AtomicLong tt = new AtomicLong(0L);
+
     public BaseWebSocketHandler() {
         lock = new ReentrantLock();
         client = new WebSocketClient();
-
 
         counter = new AtomicLong(0L);
     }
@@ -67,7 +67,7 @@ public abstract class BaseWebSocketHandler {
     }
 
     public abstract String getWebSocketUrl();
-    
+
     /**
      * 文本消息。
      *
@@ -75,6 +75,13 @@ public abstract class BaseWebSocketHandler {
      * @param msg
      */
     protected abstract void onMessage(Session session, String msg);
+
+    public void onMessageWithStats(Session session, String msg) {
+        long b = System.currentTimeMillis();
+        onMessage(session, msg);
+        times.incrementAndGet();
+        tt.addAndGet(System.currentTimeMillis() - b);
+    }
 
     /**
      * 二进制消息。默认使用gzip解压二进制数据流为字符串，然后再调用onMessage
@@ -85,7 +92,11 @@ public abstract class BaseWebSocketHandler {
      */
     protected void onBinaryMessage(Session session, InputStream is) throws IOException {
         String msg = this.uncompressGzip(is);
-        onMessage(session, msg);
+        if (DBG) {
+            onMessageWithStats(session, msg);
+        } else {
+            onMessage(session, msg);
+        }
     }
 
     protected void onError(Throwable ex) {
@@ -158,28 +169,29 @@ public abstract class BaseWebSocketHandler {
         }
         return session;
     }
-    
+
     protected void resubscribe(Instrument instrument, BaseInstrumentDepth depth) {
-        
+
     }
-    
+
     /**
      * 重新订阅某个交易对，或者重新建立连接。
+     * 
      * @param instrument
      * @param depth
      * @param isSubscribe
      * @param isConnect
      */
     public void reset(Instrument instrument, BaseInstrumentDepth depth, boolean isSubscribe, boolean isConnect) {
-        if(isSubscribe && !isConnect) {
+        if (isSubscribe && !isConnect) {
             resubscribe(instrument, depth);
         }
-        
-        if(isConnect) {
-            if(clientOpened()) {
+
+        if (isConnect) {
+            if (clientOpened()) {
                 session.close(-1, "missing packet!");
             }
-            
+
             session = connect();
         }
     }
@@ -190,7 +202,7 @@ public abstract class BaseWebSocketHandler {
 
     protected String uncompressGzip(InputStream is) throws IOException {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-//        final Deflate64CompressorInputStream zin = new Deflate64CompressorInputStream(is);
+        // final Deflate64CompressorInputStream zin = new Deflate64CompressorInputStream(is);
         GZIPInputStream zin = new GZIPInputStream(is);
         final byte[] buffer = new byte[1024];
         int offset;
@@ -220,6 +232,13 @@ public abstract class BaseWebSocketHandler {
 
     protected long generateReqId() {
         return System.currentTimeMillis() + counter.incrementAndGet();
+    }
+
+    public void dumpStats(PrintStream ps) {
+        if (times.get() > 0) {
+            ps.println(String.format("\n%s: %d|%d|%d\n", getClass().getName(), tt.get(), times.get(),
+                    tt.get() / times.get()));
+        }
     }
 
 }
