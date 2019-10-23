@@ -50,6 +50,13 @@ public class OkexInstrumentDepth extends BaseInstrumentDepth {
             // lastChecksum.set(checksum);
             lastTimestamp.set(ts);
             book.setLastUpdateTs(ts);
+            
+            if(isSnapshot) {
+                controller.resetBook(source, instrument, book);
+            }
+            else {
+                controller.aggregate(source, instrument, book);
+            }
 
         } finally {
             lock.unlock();
@@ -63,7 +70,7 @@ public class OkexInstrumentDepth extends BaseInstrumentDepth {
             if (book.getBestAskPrice() <= book.getBestBidPrice()) {
                 book.clear(Side.BUY, source.ordinal());
                 book.clear(Side.SELL, source.ordinal());
-                resetController.reset(source, instrument, this, true, false);
+                controller.reset(source, instrument, this, true, false);
                 lastTimestamp.set(0L);
             }
         } finally {

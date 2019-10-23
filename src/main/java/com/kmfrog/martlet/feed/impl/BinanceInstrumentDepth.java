@@ -75,6 +75,7 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
             // logger.info("onMessage. {}|{}|{}, {}", lastUpdateId.get(), evtFirstId, evtLastId, lastId);
             lastUpdateId.set(evtLastId);
             book.setLastUpdateTs(lastTimestamp.get());
+            controller.aggregate(source, instrument, book);
         } finally {
             lock.unlock();
         }
@@ -102,6 +103,7 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
                     updatePriceLevel(Side.BUY, bids);
                     updatePriceLevel(Side.SELL, asks);
                     lastSnapshotId.set(root.getLongValue("lastUpdateId"));
+                    controller.aggregate(source, instrument, book);
                 }
             } finally {
                 lock.unlock();
@@ -129,6 +131,7 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
                 lastUpdateId.set(0);
                 book.clear(Side.BUY, source.ordinal());
                 book.clear(Side.SELL, source.ordinal());
+                controller.clear(source, instrument, book);
             }
 
             if (isWs && !isRest) {
@@ -138,7 +141,7 @@ public class BinanceInstrumentDepth extends BaseInstrumentDepth {
             lock.unlock();
         }
 
-        resetController.reset(source, instrument, this, isRest, isWs);
+        controller.reset(source, instrument, this, isRest, isWs);
         logger.info("reset");
 
     }

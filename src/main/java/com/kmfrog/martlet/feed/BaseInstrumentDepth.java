@@ -23,7 +23,7 @@ public abstract class BaseInstrumentDepth implements WsDataListener, SnapshotDat
     protected final IOrderBook book;
     protected final Instrument instrument;
     protected final Source source;
-    protected final Controller resetController;
+    protected final Controller controller;
     
     /**
      * 深度最后更新时间。
@@ -35,7 +35,7 @@ public abstract class BaseInstrumentDepth implements WsDataListener, SnapshotDat
         this.instrument = instrument;
         this.book = book;
         this.source = source;
-        this.resetController = controller;
+        this.controller = controller;
         
         lastTimestamp = new AtomicLong(0L);
 

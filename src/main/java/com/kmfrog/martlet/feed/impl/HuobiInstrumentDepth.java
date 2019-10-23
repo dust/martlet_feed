@@ -45,6 +45,8 @@ public class HuobiInstrumentDepth extends BaseInstrumentDepth {
             updatePriceLevel(Side.BUY, bids);
             updatePriceLevel(Side.SELL, asks);
             book.setLastUpdateTs(ts);
+            
+            controller.resetBook(source, instrument, book);
         } finally {
             lock.unlock();
         }
