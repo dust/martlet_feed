@@ -29,6 +29,11 @@ public interface C {
     
     static final long EPOCH_MILLIS = LocalDate.now().atStartOfDay(ZoneId.systemDefault())
             .toInstant().toEpochMilli();
+    
+    static final char SEPARATOR = ',';
+    static final char SECOND_SEPARATOR = ';';
+    static final char THIRD_SEPARATOR = '|';
+    
 
 
 }

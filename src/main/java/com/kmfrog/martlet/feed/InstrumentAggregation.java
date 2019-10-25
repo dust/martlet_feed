@@ -27,15 +27,17 @@ public class InstrumentAggregation extends Thread {
     private final Controller app;
     private final BlockingQueue<AggregateRequest> queue;
     private final AggregateOrderBook aggBook;
+    private final FeedBroadcast broadcast;
 
     protected final AtomicLong times = new AtomicLong(0L);
     protected final AtomicLong tt = new AtomicLong(0L);
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public InstrumentAggregation(Instrument instrument, AggregateOrderBook book, Controller app) {
+    public InstrumentAggregation(Instrument instrument, AggregateOrderBook book,FeedBroadcast broadcast, Controller app) {
         this.instrument = instrument;
         this.app = app;
+        this.broadcast = broadcast;
         isQuit = new AtomicBoolean(false);
         queue = new PriorityBlockingQueue<>();
         aggBook = book;
@@ -64,6 +66,8 @@ public class InstrumentAggregation extends Thread {
                 if (req.book != null) {
                     aggBook.aggregate(src, req.book);
                 }
+                
+                broadcast.sendDepth(aggBook, instrument.getPriceFractionDigits(), instrument.getSizeFractionDigits(), 5);
 
                 if (BaseWebSocketHandler.DBG) {
                     tt.addAndGet(System.currentTimeMillis() - start);

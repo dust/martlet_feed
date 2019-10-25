@@ -1,16 +1,20 @@
 package com.kmfrog.martlet.book;
 
+import static com.kmfrog.martlet.C.SEPARATOR;
+
 import java.io.PrintStream;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.kmfrog.martlet.feed.Source;
+import com.kmfrog.martlet.util.Fmt;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectRBTreeMap;
 import it.unimi.dsi.fastutil.longs.LongComparators;
 import it.unimi.dsi.fastutil.longs.LongSortedSet;
+import it.unimi.dsi.fastutil.objects.ObjectBidirectionalIterator;
 
 /**
  * An aggregate order book(Thread safety. 多源订单簿。它是线程安全的。
@@ -182,7 +186,7 @@ public class AggregateOrderBook implements IOrderBook {
             askLock.readLock().unlock();
         }
     }
-    
+
     @Override
     public long getLastUpdateTs() {
         return lastUpdate.get();
@@ -195,9 +199,9 @@ public class AggregateOrderBook implements IOrderBook {
 
     @Override
     public void setLastUpdateTs(long ts) {
-        //对于聚合订单簿，每次更新接收时间，但是平台最后更新时间，只能是更新的时间才被更新。即只单向（大）修改，不会回撤。避免时间混乱。
+        // 对于聚合订单簿，每次更新接收时间，但是平台最后更新时间，只能是更新的时间才被更新。即只单向（大）修改，不会回撤。避免时间混乱。
         lastReceived.set(System.currentTimeMillis());
-        if(lastUpdate.get() < ts) {
+        if (lastUpdate.get() < ts) {
             setLastUpdateTs(ts);
         }
     }
@@ -218,7 +222,7 @@ public class AggregateOrderBook implements IOrderBook {
                 }
             } else {
                 long newSize = levels.get(price).updateTo(quantity, source);
-                if(newSize <=0) {
+                if (newSize <= 0) {
                     levels.remove(price);
                 }
             }
@@ -229,7 +233,6 @@ public class AggregateOrderBook implements IOrderBook {
         }
     }
 
-    
     public boolean incr(Side side, long price, long quantity, int source) {
         Lock lock = side == Side.BUY ? bidLock.writeLock() : askLock.writeLock();
 
@@ -286,9 +289,10 @@ public class AggregateOrderBook implements IOrderBook {
             lock.unlock();
         }
     }
-    
+
     /**
      * 聚合其它order book.
+     * 
      * @param src
      * @param book
      */
@@ -296,7 +300,7 @@ public class AggregateOrderBook implements IOrderBook {
         aggregate(Side.BUY, src, book);
         aggregate(Side.SELL, src, book);
     }
-    
+
     private void aggregate(Side side, int source, IOrderBook book) {
         Lock lock = side == Side.BUY ? bidLock.writeLock() : askLock.writeLock();
         LongSortedSet prices = side == Side.BUY ? book.getBidPrices() : book.getAskPrices();
@@ -305,7 +309,8 @@ public class AggregateOrderBook implements IOrderBook {
         try {
             Long2ObjectRBTreeMap<MultiSrc> levels = getLevels(side);
             prices.stream().forEach(price -> {
-                long quantity = side == Side.BUY ? book.getBidSize(price.longValue()): book.getAskSize(price.longValue());
+                long quantity = side == Side.BUY ? book.getBidSize(price.longValue())
+                        : book.getAskSize(price.longValue());
                 if (!levels.containsKey(price.longValue())) {
                     // 如果order book中不存在数量为零的此价位，那么也没有意义进行添加。
                     if (quantity > 0L) {
@@ -319,12 +324,49 @@ public class AggregateOrderBook implements IOrderBook {
                         levels.remove(price.longValue());
                     }
                 }
-                
+
             });
-        }
-        finally {
+        } finally {
             lock.unlock();
         }
+    }
+
+    public String getPlainText(int pricePrecision, int volumePrecision, int maxLevel) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(lastUpdate).append(SEPARATOR).append(lastReceived).append(SEPARATOR);
+        sb.append('[');
+        sb.append(dumpPlainText(Side.BUY, pricePrecision, volumePrecision, maxLevel));
+        sb.append(']').append(SEPARATOR).append('[');
+        sb.append(dumpPlainText(Side.SELL, pricePrecision, volumePrecision, maxLevel));
+        sb.append(']');
+        return sb.toString();
+    }
+
+    public String dumpPlainText(Side side, int pricePrecision, int volumePrecision, int maxLevel) {
+        StringBuilder sb = new StringBuilder();
+        Lock lock = side == Side.BUY ? bidLock.readLock() : askLock.readLock();
+
+        lock.lock();
+        try {
+            Long2ObjectRBTreeMap<MultiSrc> levels = getLevels(side);
+            int index = 0;
+            for (ObjectBidirectionalIterator<Long2ObjectMap.Entry<MultiSrc>> iter = levels.long2ObjectEntrySet()
+                    .iterator(); iter.hasNext() && index < maxLevel;) {
+
+                Long2ObjectMap.Entry<MultiSrc> entry = iter.next();
+                if (sb.length() > 0) {
+                    sb.append(SEPARATOR);
+                }
+                MultiSrc v = entry.getValue();
+                sb.append('[').append(Fmt.fmtNum(entry.getLongKey(), pricePrecision)).append(SEPARATOR)
+                        .append(Fmt.fmtNum(v.size(), volumePrecision)).append(SEPARATOR).append(v.dumpPlainText(volumePrecision))
+                        .append(']');
+                index++;
+            }
+        } finally {
+            lock.unlock();
+        }
+        return sb.toString();
     }
 
     public void dump(Side side, PrintStream writer) {

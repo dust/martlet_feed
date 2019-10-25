@@ -1,14 +1,20 @@
 package com.kmfrog.martlet.book;
 
+import static com.kmfrog.martlet.C.SEPARATOR;
+
 import java.io.PrintStream;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import com.kmfrog.martlet.util.Fmt;
+
+import it.unimi.dsi.fastutil.longs.Long2LongMap.Entry;
 import it.unimi.dsi.fastutil.longs.Long2LongRBTreeMap;
 import it.unimi.dsi.fastutil.longs.LongComparators;
 import it.unimi.dsi.fastutil.longs.LongSortedSet;
+import it.unimi.dsi.fastutil.objects.ObjectBidirectionalIterator;
 
 /**
  * An basic order book. 一个线程安全的基本订单簿。
@@ -209,6 +215,41 @@ public class OrderBook implements IOrderBook {
         } finally {
             lock.unlock();
         }
+    }
+
+    public String getPlainText(int pricePrecision, int volumePrecision, int maxLevel) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(lastUpdate).append(SEPARATOR).append(lastReceived).append(SEPARATOR);
+        sb.append('[');
+        sb.append(dumpPlainText(Side.BUY, pricePrecision, volumePrecision, maxLevel));
+        sb.append(']').append(SEPARATOR).append('[');
+        sb.append(dumpPlainText(Side.SELL, pricePrecision, volumePrecision, maxLevel));
+        sb.append(']');
+        return sb.toString();
+    }
+
+    public String dumpPlainText(Side side, int pricePrecision, int volumePrecision, int maxLevel) {
+        StringBuilder sb = new StringBuilder();
+        Lock lock = side == Side.BUY ? bidLock.readLock() : askLock.readLock();
+
+        lock.lock();
+        try {
+            Long2LongRBTreeMap levels = getLevels(side);
+            int index = 0;
+            for (ObjectBidirectionalIterator<Entry> iter = levels.long2LongEntrySet().iterator(); iter.hasNext()
+                    && index < maxLevel;) {
+                Entry entry = iter.next();
+                if (sb.length() > 0) {
+                    sb.append(SEPARATOR);
+                }
+                sb.append('[').append(Fmt.fmtNum(entry.getLongKey(), pricePrecision)).append(SEPARATOR)
+                        .append(Fmt.fmtNum(entry.getLongValue(), volumePrecision)).append(']');
+                index++;
+            }
+        } finally {
+            lock.unlock();
+        }
+        return sb.toString();
     }
 
     public void dump(Side side, PrintStream writer) {

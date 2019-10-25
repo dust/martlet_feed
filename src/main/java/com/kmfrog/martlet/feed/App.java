@@ -14,6 +14,7 @@ import com.kmfrog.martlet.book.AggregateOrderBook;
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.OrderBook;
+import com.kmfrog.martlet.book.Side;
 import com.kmfrog.martlet.feed.impl.BinanceInstrumentDepth;
 import com.kmfrog.martlet.feed.impl.BinanceWebSocketHandler;
 import com.kmfrog.martlet.feed.impl.HuobiInstrumentDepth;
@@ -49,9 +50,12 @@ public class App implements Controller {
      * websocket集合。来源为key.
      */
     private final Map<Source, WebSocketDaemon> websocketDaemons;
+    
+    private final FeedBroadcast broadcast;
 
     public App() {
         books = new Long2ObjectArrayMap<>();
+        broadcast = new FeedBroadcast("localhost", 5188, 1);
 
         multiSrcBooks = new ConcurrentHashMap<>();
         websocketDaemons = new ConcurrentHashMap<>();
@@ -70,7 +74,7 @@ public class App implements Controller {
     AggregateOrderBook makesureAggregateOrderBook(Instrument instrument) {
         AggregateOrderBook book = books.computeIfAbsent(instrument.asLong(), (key) -> new AggregateOrderBook(key));
         if (!aggWorkers.containsKey(instrument.asLong())) {
-            InstrumentAggregation worker = new InstrumentAggregation(instrument, book, this);
+            InstrumentAggregation worker = new InstrumentAggregation(instrument, book, broadcast, this);
             aggWorkers.put(instrument.asLong(), worker);
             worker.start();
         }
@@ -151,6 +155,7 @@ public class App implements Controller {
             // System.out.format("\nHB: %d|%d\n", now - hbBtcUsdt.getLastReceivedTs(), hbBtcUsdt.getLastReceivedTs() -
             // hbBtcUsdt.getLastUpdateTs());
             System.out.println("\n====\n");
+            
 
             // executor.submit(new AggregateRunnable(app.makesureAggregateOrderBook(bnbbtc.asLong()), new Source[]
             // {Source.Binance, Source.Okex, Source.Huobi}, app));
@@ -162,6 +167,7 @@ public class App implements Controller {
             System.out.format("%d|%d, %d|%d, %d|%d, %d|%d\n\n", btcBook.getBestBidPrice(), btcBook.getBestAskPrice(),
                     hbBtcUsdt.getBestBidPrice(), hbBtcUsdt.getBestAskPrice(), okexBtcUsdt.getBestBidPrice(),
                     okexBtcUsdt.getBestAskPrice(), aggBook.getBestBidPrice(), aggBook.getBestAskPrice());
+            System.out.format("\n\n%s\n", aggBook.dumpPlainText(Side.BUY, 8, 8, 5));
         }
     }
 

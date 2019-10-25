@@ -1,5 +1,8 @@
 package com.kmfrog.martlet.book;
 
+import com.kmfrog.martlet.C;
+import com.kmfrog.martlet.util.Fmt;
+
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 
 /**
@@ -21,6 +24,7 @@ public class MultiSrc {
 
     /**
      * 某价位下，所有来源的数量集合。
+     * 
      * @param price
      */
     MultiSrc(long price) {
@@ -54,8 +58,7 @@ public class MultiSrc {
     long updateTo(long quantity, int source) {
         if (quantity == 0) {
             srcSizeMap.remove(source);
-        }
-        else{
+        } else {
             srcSizeMap.put(source, quantity);
         }
         return size();
@@ -63,15 +66,27 @@ public class MultiSrc {
 
     /**
      * 清理某个来源的数量。
+     * 
      * @param source
      */
     boolean clearSource(int source) {
-        if(srcSizeMap.containsKey(source)) {
+        if (srcSizeMap.containsKey(source)) {
             srcSizeMap.remove(source);
         }
         return size() == 0;
     }
-    
+
+    public String dumpPlainText(int volumePrecision) {
+        StringBuilder sb = new StringBuilder();
+        srcSizeMap.forEach((k, v) -> {
+            if (sb.length() > 0) {
+                sb.append(C.THIRD_SEPARATOR);
+            }
+            sb.append(k).append(C.SECOND_SEPARATOR).append(Fmt.fmtNum(v, volumePrecision));
+        });
+        return sb.toString();
+    }
+
     String dumpString() {
         return srcSizeMap.toString();
     }

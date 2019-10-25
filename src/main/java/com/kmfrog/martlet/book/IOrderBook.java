@@ -23,6 +23,26 @@ public interface IOrderBook {
     long getLastUpdateTs();
     long getLastReceivedTs();
     void setLastUpdateTs(long ts);
+
+    /**
+     * 以简洁文本平铺整个order book
+     * {last_update_ts},{last_received_ts},[[price_level1, volume, source;size|source2;size2|...],
+     * @param pricePrecision
+     * @param volumePrecision
+     * @param maxLevel
+     * @return
+     */
+    String getPlainText(int pricePrecision, int volumePrecision, int maxLevel);
+    
+    /**
+     * 简洁平铺某一侧的order book.
+     * @param side
+     * @param pricePrecision
+     * @param volumePrecision
+     * @param maxLevel
+     * @return
+     */
+    String dumpPlainText(Side side, int pricePrecision, int volumePrecision, int maxLevel);
     
     /**
      * 将参数中的变化量累计到订单档位，不存在此档位时会新增。
