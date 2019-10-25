@@ -28,16 +28,26 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
  *
  */
 public class App implements Controller {
+
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 
     /**
      * 所有交易对的聚合订单表。
      */
     private final Long2ObjectArrayMap<AggregateOrderBook> books;
+    /**
+     * 来源:单一订单簿(k:v)的集合。方便从来源检索单一订单簿。
+     */
     private final Map<Source, Long2ObjectArrayMap<IOrderBook>> multiSrcBooks;
     private static ExecutorService executor = Executors
             .newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("MartletAppExecutor-%d").build());
+    /**
+     * 聚合工作线程。{instrument.asLong : worker}
+     */
     private final Map<Long, InstrumentAggregation> aggWorkers;
+    /**
+     * websocket集合。来源为key.
+     */
     private final Map<Source, WebSocketDaemon> websocketDaemons;
 
     public App() {
@@ -67,10 +77,8 @@ public class App implements Controller {
         return book;
     }
 
-    void startSnapshotTask(String symbol, SnapshotDataListener listener) {
-        Runnable r = new RestSnapshotRunnable(
-                String.format("https://www.binance.com/api/v1/depth?symbol=%s&limit=10", symbol), "GET", null, null,
-                listener);
+    void startSnapshotTask(String url, SnapshotDataListener listener) {
+        Runnable r = new RestSnapshotRunnable(url, "GET", null, null, listener);
         executor.submit(r);
     }
 
@@ -89,7 +97,7 @@ public class App implements Controller {
         //
         BinanceInstrumentDepth btc = new BinanceInstrumentDepth(bnbbtc, btcBook, Source.Binance, app);
         //// BinanceInstrumentDepth eth = new BinanceInstrumentDepth(bnbeth, bnbethBook, Source.Binance, app);
-        app.startSnapshotTask("BTCUSDT", btc);
+        app.startSnapshotTask(String.format("https://www.binance.com/api/v1/depth?symbol=%s&limit=10", "BTCUSDT"), btc);
         //// app.startSnapshotTask("BNBETH", eth);
         BaseWebSocketHandler handler = new BinanceWebSocketHandler(
                 "wss://stream.binance.com:9443/stream?streams=%s@depth", new String[] { "btcusdt" },
@@ -149,6 +157,11 @@ public class App implements Controller {
             if (app.aggWorkers.containsKey(bnbbtc.asLong())) {
                 app.aggWorkers.get(bnbbtc.asLong()).dumpStats(System.out);
             }
+            System.out.println("\n====\n");
+            AggregateOrderBook aggBook = app.makesureAggregateOrderBook(bnbbtc);
+            System.out.format("%d|%d, %d|%d, %d|%d, %d|%d\n\n", btcBook.getBestBidPrice(), btcBook.getBestAskPrice(),
+                    hbBtcUsdt.getBestBidPrice(), hbBtcUsdt.getBestAskPrice(), okexBtcUsdt.getBestBidPrice(),
+                    okexBtcUsdt.getBestAskPrice(), aggBook.getBestBidPrice(), aggBook.getBestAskPrice());
         }
     }
 
@@ -158,32 +171,10 @@ public class App implements Controller {
         websocketDaemons.get(mkt).reset(instrument, depth, isSubscribe, isConnect);
     }
 
-    @Override
-    public void aggregate(Source mkt, Instrument instrument, IOrderBook book) {
-        try {
-            if (aggWorkers.containsKey(instrument.asLong())) {
-                aggWorkers.get(instrument.asLong()).putMsg(mkt, Action.REPLACE, book);
-            }
-        } catch (InterruptedException e) {
-            logger.warn(e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void clear(Source mkt, Instrument instrument, IOrderBook book) {
-        try {
-            if (aggWorkers.containsKey(instrument.asLong())) {
-                aggWorkers.get(instrument.asLong()).putMsg(mkt, Action.CLEAR, book);
-            }
-        } catch (InterruptedException e) {
-            logger.warn(e.getMessage(), e);
-        }
-    }
-
     public void resetBook(Source mkt, Instrument instrument, IOrderBook book) {
         try {
             if (aggWorkers.containsKey(instrument.asLong())) {
-                aggWorkers.get(instrument.asLong()).putMsg(mkt, Action.RESET, book);
+                aggWorkers.get(instrument.asLong()).putMsg(mkt, book);
             }
         } catch (InterruptedException e) {
             logger.warn(e.getMessage(), e);

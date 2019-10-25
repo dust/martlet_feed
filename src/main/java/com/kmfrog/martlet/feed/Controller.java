@@ -21,30 +21,12 @@ public interface Controller {
      * @param reconnect
      */
     void reset(Source mkt, Instrument instrument, BaseInstrumentDepth depth, boolean resubscribe, boolean reconnect);
-
-    /**
-     * 将单一来源的order book交给控制层。由它来进行聚合或其它处理。
-     * 
-     * @param mkt
-     * @param instrument
-     * @param book
-     */
-    void aggregate(Source mkt, Instrument instrument, IOrderBook book);
-
-    /**
-     * 因数据或其它原因，某个来源的数据已经无效了，提交给控制层，由它进行处理。
-     * 
-     * @param mkt
-     * @param instrument
-     * @param book
-     */
-    void clear(Source mkt, Instrument instrument, IOrderBook book);
     
     /**
      * 清除然后更新深度数据。
      * @param mkt
      * @param instrument
-     * @param book
+     * @param book 如果book为null, 则只清理某来源的订单项。
      */
     void resetBook(Source mkt, Instrument instrument, IOrderBook book);
 

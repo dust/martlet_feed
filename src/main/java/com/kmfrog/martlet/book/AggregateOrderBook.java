@@ -292,9 +292,9 @@ public class AggregateOrderBook implements IOrderBook {
      * @param src
      * @param book
      */
-    public void aggregate(Source src, IOrderBook book) {
-        aggregate(Side.BUY, src.ordinal(), book);
-        aggregate(Side.SELL, src.ordinal(), book);
+    public void aggregate(int src, IOrderBook book) {
+        aggregate(Side.BUY, src, book);
+        aggregate(Side.SELL, src, book);
     }
     
     private void aggregate(Side side, int source, IOrderBook book) {

@@ -20,8 +20,7 @@ public class OkexInstrumentDepth extends BaseInstrumentDepth {
     // private final AtomicLong lastChecksum;
     private ReentrantLock lock = new ReentrantLock();
 
-    public OkexInstrumentDepth(Instrument instrument, IOrderBook book, Source source,
-            Controller controller) {
+    public OkexInstrumentDepth(Instrument instrument, IOrderBook book, Source source, Controller controller) {
         super(instrument, book, source, controller);
     }
 
@@ -33,7 +32,7 @@ public class OkexInstrumentDepth extends BaseInstrumentDepth {
 
         lock.lock();
         try {
-            if (ts < lastTimestamp.get()  && !isSnapshot) {
+            if (ts < lastTimestamp.get() && !isSnapshot) {
                 // 第一个推送或过期的推送， 并且不是快照数据（全量）。
                 return;
             }
@@ -51,12 +50,8 @@ public class OkexInstrumentDepth extends BaseInstrumentDepth {
             lastTimestamp.set(ts);
             book.setLastUpdateTs(ts);
             
-            if(isSnapshot) {
-                controller.resetBook(source, instrument, book);
-            }
-            else {
-                controller.aggregate(source, instrument, book);
-            }
+            //因为orderbook总是一个全量数据，所以每次都是重设。
+            controller.resetBook(source, instrument, book);
 
         } finally {
             lock.unlock();

@@ -27,12 +27,12 @@ public class InstrumentAggregation extends Thread {
     private final Controller app;
     private final BlockingQueue<AggregateRequest> queue;
     private final AggregateOrderBook aggBook;
-    
+
     protected final AtomicLong times = new AtomicLong(0L);
     protected final AtomicLong tt = new AtomicLong(0L);
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    
+
     public InstrumentAggregation(Instrument instrument, AggregateOrderBook book, Controller app) {
         this.instrument = instrument;
         this.app = app;
@@ -47,50 +47,48 @@ public class InstrumentAggregation extends Thread {
         while (!isQuit.get()) {
             try {
                 AggregateRequest req = queue.take();
-                long b = 0;
-                if(BaseWebSocketHandler.DBG) {
-                    b = System.currentTimeMillis();
+                long start = 0;
+                if (BaseWebSocketHandler.DBG) {
+                    start = System.currentTimeMillis();
                 }
                 // 检查偏离度。time/price level
                 if (!checkDeviate(req.source, req.book)) {
                     continue;
                 }
 
-                switch (req.action) {
-                case RESET:
-                    aggBook.clear(Side.BUY, req.source.ordinal());
-                    aggBook.clear(Side.SELL, req.source.ordinal());
-
-                    aggBook.aggregate(req.source, req.book);
-                    break;
-                case REPLACE:
-                case INCREMENT:
-                    aggBook.aggregate(req.source, req.book);
-                    break;
-                case CLEAR:
-                    aggBook.clear(Side.BUY, req.source.ordinal());
-                    aggBook.clear(Side.SELL, req.source.ordinal());
-                    break;
+                // 先清理当前来源的订单项。
+                int src = req.source.ordinal();
+                aggBook.clear(Side.BUY, src);
+                aggBook.clear(Side.SELL, src);
+                // 全量更新当前来源的订单项。
+                if (req.book != null) {
+                    aggBook.aggregate(src, req.book);
                 }
-                if(BaseWebSocketHandler.DBG) {
-                    tt.addAndGet(System.currentTimeMillis()-b);
+
+                if (BaseWebSocketHandler.DBG) {
+                    tt.addAndGet(System.currentTimeMillis() - start);
                     times.incrementAndGet();
                 }
             } catch (InterruptedException e) {
-                logger.warn("{}({}), {}", instrument.asString(), instrument.asLong(), e.getMessage(), e);
+                logger.warn("{}({}), {}", instrument.asString(), instrument.asLong(), e.getMessage());
             }
 
         }
 
     }
-    
+
+    public void quit() {
+        isQuit.compareAndSet(false, true);
+        interrupt();
+    }
+
     void dumpStats(PrintStream ps) {
         ps.format("\n Aggreate %s, %d|%d\n", instrument.asString(), tt.get(), times.get());
     }
 
-    void putMsg(Source src, Action act, IOrderBook book) throws InterruptedException {
+    void putMsg(Source src, /* Action act, */ IOrderBook book) throws InterruptedException {
         AggregateRequest req = new AggregateRequest();
-        req.action = act;
+        // req.action = act;
         req.source = src;
         req.book = book;
         queue.put(req);
@@ -105,7 +103,7 @@ public class InstrumentAggregation extends Thread {
     static class AggregateRequest implements Comparable<AggregateRequest> {
         Source source;
         IOrderBook book;
-        Action action;
+        // Action action;
 
         @Override
         public int compareTo(AggregateRequest o) {
@@ -134,7 +132,7 @@ public class InstrumentAggregation extends Thread {
         public int hashCode() {
             final int prime = 31;
             int result = 1;
-            result = prime * result + (action == null ? 0 : action.hashCode());
+            // result = prime * result + (action == null ? 0 : action.hashCode());
             result = prime * result + ((book == null) ? 0 : book.hashCode());
             result = prime * result + ((source == null) ? 0 : source.hashCode());
             return result;
@@ -159,9 +157,9 @@ public class InstrumentAggregation extends Thread {
             if (source != other.source) {
                 return false;
             }
-            if (action != other.action) {
-                return false;
-            }
+            // if (action != other.action) {
+            // return false;
+            // }
             if (book == null) {
                 if (other.book != null) {
                     return false;

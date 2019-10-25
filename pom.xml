@@ -38,6 +38,11 @@
 		</dependency> -->
 		<!-- // trade dependency -->
 		<dependency>
+      <groupId>org.zeromq</groupId>
+      <artifactId>jeromq</artifactId>
+      <version>0.5.1</version>
+    </dependency>
+		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.7</version>

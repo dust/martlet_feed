@@ -22,7 +22,9 @@ import org.slf4j.LoggerFactory;
 import com.kmfrog.martlet.book.Instrument;
 
 /**
- * author: Dust
+ * 
+ * @author dust Oct 25, 2019
+ *
  */
 public abstract class BaseWebSocketHandler {
 
@@ -76,6 +78,12 @@ public abstract class BaseWebSocketHandler {
      */
     protected abstract void onMessage(Session session, String msg);
 
+    /**
+     * 带有性能时间统计功能的onMessage方法。
+     * 
+     * @param session
+     * @param msg
+     */
     public void onMessageWithStats(Session session, String msg) {
         long b = System.currentTimeMillis();
         onMessage(session, msg);
@@ -100,7 +108,7 @@ public abstract class BaseWebSocketHandler {
     }
 
     protected void onError(Throwable ex) {
-        logger.error(ex.getMessage(), ex);
+        logger.error("{}.onError: {}", getClass(), ex.getMessage(), ex);
     }
 
     protected void onClose(int statusCode, String reason) {
@@ -164,7 +172,7 @@ public abstract class BaseWebSocketHandler {
                 session = connect();
             }
         } catch (Exception ex) {
-            logger.error("keepAlive [{}]", String.join("/", symbolNames), ex);
+            logger.error("{}.keepAlive [{}], {}", getClass(), String.join("/", symbolNames), ex.getMessage());
         }
         return session;
     }
