@@ -39,16 +39,20 @@ public class InSpreadRunnable implements Runnable {
 
     private int ordPricePrecision;
     private int ordSizePrecision;
+    private int min;
+    private int max;
     
     private static Logger logger = LoggerFactory.getLogger(InSpreadRunnable.class);
 
     public InSpreadRunnable(Instrument instrument, IOrderBook book, BrokerApiRestClient client, int ordPricePrecision,
-            int ordSizePrecision) {
+            int ordSizePrecision, int min, int max) {
         this.instrument = instrument;
         this.book = book;
         this.client = client;
         this.ordPricePrecision = ordPricePrecision;
         this.ordSizePrecision = ordSizePrecision;
+        this.min = min;
+        this.max = max;
     }
 
     @Override
@@ -73,7 +77,7 @@ public class InSpreadRunnable implements Runnable {
             //
             // if (sum.compareTo(uplimitIn24h)< 0 && lastMinSum.compareTo(lastMinUplimit) < 0) {
             // 最后一分种交易量小于预设值上限
-            long quantity = getNumBetween(5000, 59000);
+            long quantity = getNumBetween(min, max);
 
             String qtyStr = fmtDec(quantity, instrument.getSizeFractionDigits(), ordSizePrecision);
             String priceStr = fmtDec(price, instrument.getPriceFractionDigits(), ordPricePrecision);
@@ -81,7 +85,9 @@ public class InSpreadRunnable implements Runnable {
             NewOrder buy = NewOrder.limitBuy(instrument.asString(), TimeInForce.GTC, qtyStr, priceStr);
 //             System.out.println(sell+"\n####\n"+buy);
             NewOrderResponse sellResp, buyResp;
-            if (System.currentTimeMillis() % 3 < 2) {
+//            sellResp=null;
+//            buyResp=null;
+            if (System.currentTimeMillis() % 5 < 3) {
                 sellResp = client.newOrder(sell);
                 buyResp = client.newOrder(buy);
             }
@@ -89,8 +95,7 @@ public class InSpreadRunnable implements Runnable {
                 buyResp = client.newOrder(buy);
                 sellResp = client.newOrder(sell);
             }
-//            
-//            // System.out.println(sellResp + "\n######\n"+buyResp);
+////            
             Set<Long> orderIds = new HashSet<>();
             orderIds.add(sellResp.getOrderId());
             orderIds.add(buyResp.getOrderId());
@@ -107,8 +112,8 @@ public class InSpreadRunnable implements Runnable {
             symbolOpenOrders.setSymbol(instrument.asString());
             List<Order> openOrders = client.getOpenOrders(symbolOpenOrders);
             if (openOrders.size() > 0 && openOrders.stream().anyMatch(ord -> orderIds.contains(ord.getOrderId()))) {
-               logger.warn("not matches {}|{}|{}, {}|{}|{}", sellResp.getOrderId(), sell.getPrice(), sell.getQuantity(),
-                       buyResp.getOrderId(), buy.getPrice(), buy.getQuantity());
+               logger.warn("not matches {}|{}|{}, {}|{}|{}", (sellResp==null?0:sellResp.getOrderId()), sell.getPrice(), sell.getQuantity(),
+                       buyResp==null?0:buyResp.getOrderId(), buy.getPrice(), buy.getQuantity());
             }
 
             // }
