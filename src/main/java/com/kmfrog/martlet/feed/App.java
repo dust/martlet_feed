@@ -21,6 +21,7 @@ import com.kmfrog.martlet.feed.impl.HuobiInstrumentDepth;
 import com.kmfrog.martlet.feed.impl.HuobiWebSocketHandler;
 import com.kmfrog.martlet.feed.impl.OkexInstrumentDepth;
 import com.kmfrog.martlet.feed.impl.OkexWebSocketHandler;
+import com.kmfrog.martlet.feed.net.FeedBroadcast;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
 

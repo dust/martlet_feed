@@ -1,4 +1,4 @@
-package com.kmfrog.martlet.feed;
+package com.kmfrog.martlet.feed.net;
 
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;

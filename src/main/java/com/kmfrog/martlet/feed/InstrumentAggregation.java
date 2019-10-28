@@ -13,6 +13,7 @@ import com.kmfrog.martlet.book.AggregateOrderBook;
 import com.kmfrog.martlet.book.IOrderBook;
 import com.kmfrog.martlet.book.Instrument;
 import com.kmfrog.martlet.book.Side;
+import com.kmfrog.martlet.feed.net.FeedBroadcast;
 
 /**
  * 基于推送事件队列的聚合工作线程。
